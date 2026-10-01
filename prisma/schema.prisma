@@ -1,0 +1,800 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  CASHIER
+  INVENTORY
+  ACCOUNTANT
+}
+
+enum MovementType {
+  STOCK_IN
+  STOCK_OUT
+  STOCK_RETURN
+}
+
+enum InventoryReason {
+  PURCHASE
+  SALE
+  REFUND_RETURN
+  DAMAGE
+  INTERNAL_USAGE
+  ADJUSTMENT
+  DELIVERY
+  MANUAL_ADD
+  REVERSAL
+}
+
+enum PurchaseStatus {
+  DRAFT
+  ORDERED
+  PARTIALLY_RECEIVED
+  RECEIVED
+  CANCELLED
+}
+
+enum SalesStatus {
+  DRAFT
+  COMPLETED
+  CANCELLED
+  VOIDED
+}
+
+enum RefundStatus {
+  CREATED
+  APPROVED
+  COMPLETED
+  CANCELLED
+}
+
+enum QuotationStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+enum DeliveryStatus {
+  PENDING
+  PREPARING
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  CARD
+  MOBILE_FINANCIAL_SERVICE
+  CHECK
+  CREDIT_DUE
+  OTHER
+}
+
+enum EntryDirection {
+  DEBIT
+  CREDIT
+}
+
+enum PaymentEntityType {
+  SALE
+  PURCHASE
+  REFUND
+  EXPENSE
+  CUSTOMER_PAYMENT
+  SUPPLIER_PAYMENT
+  OTHER_INCOME
+}
+
+enum CheckStatus {
+  PENDING
+  DEPOSITED
+  CLEARED
+  BOUNCED
+  CANCELLED
+}
+
+enum EmailStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model Branch {
+  id             String      @id @default(cuid())
+  code           String      @unique
+  name           String
+  address        String?
+  phone          String?
+  isDefault      Boolean     @default(false)
+  isActive       Boolean     @default(true)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  users          User[]
+  categories     Category[]
+  products       Product[]
+  customers      Customer[]
+  suppliers      Supplier[]
+  paymentAccount PaymentAccount[]
+  inventoryTransactions InventoryTransaction[]
+  purchases      Purchase[]
+  sales          Sale[]
+  refunds        Refund[]
+  payments       Payment[]
+  paymentLedgers PaymentLedger[]
+  expenseCategories ExpenseCategory[]
+  expenses       Expense[]
+  quotations     Quotation[]
+  deliveries     Delivery[]
+  checkPayments  CheckPayment[]
+  auditLogs      AuditLog[]
+  dailyClosings  DailyClosing[]
+}
+
+model User {
+  id             String      @id @default(cuid())
+  name           String
+  email          String      @unique
+  emailVerified  DateTime?
+  image          String?
+  passwordHash   String
+  role           UserRole
+  isActive       Boolean     @default(true)
+  branchId       String?
+  branch         Branch?     @relation(fields: [branchId], references: [id])
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  auditLogs      AuditLog[]
+  inventoryTransactions InventoryTransaction[]
+  sales          Sale[]      @relation("saleUser")
+  purchases      Purchase[]  @relation("purchaseUser")
+  refunds        Refund[]    @relation("refundUser")
+  paymentLedgers PaymentLedger[]
+  expenses       Expense[]
+  quotations     Quotation[]
+  dailyClosings  DailyClosing[]
+  accounts       Account[]
+  sessions       Session[]
+}
+
+model BusinessSetting {
+  id                   String   @id @default(cuid())
+  businessName         String
+  logoUrl              String?
+  address              String?
+  phone                String?
+  email                String?
+  taxId                String?
+  vatNumber            String?
+  invoicePrefix        String   @default("INV")
+  receiptPrefix        String   @default("REC")
+  currency             String   @default("BDT")
+  currencySymbol       String   @default("৳")
+  defaultTaxRate       Decimal  @default(0) @db.Decimal(8, 2)
+  lowStockThreshold    Decimal  @default(0) @db.Decimal(14, 3)
+  invoiceFooter        String?
+  costingMethod        String   @default("WEIGHTED_AVERAGE")
+  smtpHost             String?
+  smtpPort             Int?
+  smtpUser             String?
+  smtpPassword         String?
+  smtpFrom             String?
+  updatedAt            DateTime @updatedAt
+  createdAt            DateTime @default(now())
+}
+
+model Unit {
+  id                   String   @id @default(cuid())
+  name                 String
+  code                 String   @unique
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  conversionFromBase   ProductUnitConversion[] @relation("toUnit")
+  conversionToBase     ProductUnitConversion[] @relation("fromUnit")
+  productBaseUnit      Product[]               @relation("baseUnit")
+  saleItems            SaleItem[]
+  purchaseItems        PurchaseItem[]
+  refundItems          RefundItem[]
+  quotationItems       QuotationItem[]
+  inventoryTransactions InventoryTransaction[]
+}
+
+model Category {
+  id            String    @id @default(cuid())
+  name          String
+  branchId      String
+  branch        Branch    @relation(fields: [branchId], references: [id])
+  parentId      String?
+  parent        Category? @relation("categoryParent", fields: [parentId], references: [id])
+  children      Category[] @relation("categoryParent")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  products      Product[]
+
+  @@unique([branchId, name])
+}
+
+model Supplier {
+  id            String   @id @default(cuid())
+  supplierCode  String
+  name          String
+  company       String?
+  phone         String?
+  email         String?
+  address       String?
+  taxInfo       String?
+  bankInfo      String?
+  openingBalance Decimal @default(0) @db.Decimal(14, 2)
+  creditLimit   Decimal  @default(0) @db.Decimal(14, 2)
+  paymentTerms  String?
+  branchId      String
+  branch        Branch   @relation(fields: [branchId], references: [id])
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  purchases     Purchase[]
+  products      Product[]
+  payments      Payment[]
+  ledgerEntries PaymentLedger[]
+
+  @@unique([branchId, supplierCode])
+}
+
+model Customer {
+  id            String   @id @default(cuid())
+  customerCode  String
+  name          String
+  phone         String?
+  email         String?
+  address       String?
+  company       String?
+  customerType  String?
+  priceLevel    String   @default("RETAIL")
+  creditLimit   Decimal  @default(0) @db.Decimal(14, 2)
+  openingBalance Decimal @default(0) @db.Decimal(14, 2)
+  outstanding   Decimal  @default(0) @db.Decimal(14, 2)
+  branchId      String
+  branch        Branch   @relation(fields: [branchId], references: [id])
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  sales         Sale[]
+  refunds       Refund[]
+  quotations    Quotation[]
+  payments      Payment[]
+  deliveries    Delivery[]
+  checkPayments CheckPayment[]
+  ledgerEntries PaymentLedger[]
+
+  @@unique([branchId, customerCode])
+}
+
+model Product {
+  id                  String    @id @default(cuid())
+  productCode         String
+  sku                 String
+  barcode             String?
+  name                String
+  description         String?
+  branchId            String
+  branch              Branch    @relation(fields: [branchId], references: [id])
+  categoryId          String?
+  category            Category? @relation(fields: [categoryId], references: [id])
+  subcategory         String?
+  brand               String?
+  baseUnitId          String
+  baseUnit            Unit      @relation("baseUnit", fields: [baseUnitId], references: [id])
+  purchasePrice       Decimal   @db.Decimal(14, 4)
+  retailPrice         Decimal   @db.Decimal(14, 4)
+  wholesalePrice      Decimal   @db.Decimal(14, 4)
+  minSellingPrice     Decimal   @db.Decimal(14, 4)
+  stockQty            Decimal   @default(0) @db.Decimal(14, 3)
+  minStock            Decimal   @default(0) @db.Decimal(14, 3)
+  maxStock            Decimal   @default(0) @db.Decimal(14, 3)
+  supplierId          String?
+  supplier            Supplier? @relation(fields: [supplierId], references: [id])
+  taxRate             Decimal   @default(0) @db.Decimal(8, 2)
+  imageUrl            String?
+  weightedAverageCost Decimal   @default(0) @db.Decimal(14, 4)
+  isActive            Boolean   @default(true)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  variations          ProductVariation[]
+  unitConversions     ProductUnitConversion[]
+  saleItems           SaleItem[]
+  purchaseItems       PurchaseItem[]
+  refundItems         RefundItem[]
+  quotationItems      QuotationItem[]
+  inventoryTxns       InventoryTransaction[]
+
+  @@unique([branchId, productCode])
+  @@unique([branchId, sku])
+  @@index([branchId, name])
+  @@index([branchId, barcode])
+}
+
+model ProductVariation {
+  id                  String   @id @default(cuid())
+  productId           String
+  product             Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variationName       String
+  attributesJson      String
+  sku                 String
+  barcode             String?
+  costPrice           Decimal  @db.Decimal(14, 4)
+  sellingPrice        Decimal  @db.Decimal(14, 4)
+  stockQty            Decimal  @default(0) @db.Decimal(14, 3)
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@unique([productId, sku])
+}
+
+model ProductUnitConversion {
+  id                  String   @id @default(cuid())
+  productId           String
+  product             Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  fromUnitId          String
+  fromUnit            Unit     @relation("fromUnit", fields: [fromUnitId], references: [id])
+  toUnitId            String
+  toUnit              Unit     @relation("toUnit", fields: [toUnitId], references: [id])
+  factor              Decimal  @db.Decimal(14, 6)
+  createdAt           DateTime @default(now())
+
+  @@unique([productId, fromUnitId, toUnitId])
+}
+
+model InventoryTransaction {
+  id                  String          @id @default(cuid())
+  branchId            String
+  branch              Branch          @relation(fields: [branchId], references: [id])
+  productId           String
+  product             Product         @relation(fields: [productId], references: [id])
+  movementType        MovementType
+  reason              InventoryReason
+  referenceNo         String
+  referenceType       String
+  qty                 Decimal         @db.Decimal(14, 3)
+  unitId              String
+  unit                Unit            @relation(fields: [unitId], references: [id])
+  previousStock       Decimal         @db.Decimal(14, 3)
+  newStock            Decimal         @db.Decimal(14, 3)
+  note                String?
+  createdById         String
+  createdBy           User            @relation(fields: [createdById], references: [id])
+  createdAt           DateTime        @default(now())
+
+  @@index([branchId, createdAt])
+  @@index([productId, createdAt])
+}
+
+model Purchase {
+  id                  String          @id @default(cuid())
+  purchaseNo          String
+  supplierInvoiceNo   String?
+  branchId            String
+  branch              Branch          @relation(fields: [branchId], references: [id])
+  supplierId          String
+  supplier            Supplier        @relation(fields: [supplierId], references: [id])
+  status              PurchaseStatus  @default(DRAFT)
+  purchaseDate        DateTime
+  dueDate             DateTime?
+  subTotal            Decimal         @db.Decimal(14, 2)
+  discountAmount      Decimal         @default(0) @db.Decimal(14, 2)
+  taxAmount           Decimal         @default(0) @db.Decimal(14, 2)
+  shippingCost        Decimal         @default(0) @db.Decimal(14, 2)
+  otherCost           Decimal         @default(0) @db.Decimal(14, 2)
+  totalAmount         Decimal         @db.Decimal(14, 2)
+  paidAmount          Decimal         @default(0) @db.Decimal(14, 2)
+  dueAmount           Decimal         @default(0) @db.Decimal(14, 2)
+  createdById         String
+  createdBy           User            @relation("purchaseUser", fields: [createdById], references: [id])
+  notes               String?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  items               PurchaseItem[]
+  payments            Payment[]
+  ledgerEntries       PaymentLedger[]
+
+  @@unique([branchId, purchaseNo])
+  @@index([supplierId, purchaseDate])
+}
+
+model PurchaseItem {
+  id                  String   @id @default(cuid())
+  purchaseId          String
+  purchase            Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  productId           String
+  product             Product  @relation(fields: [productId], references: [id])
+  qty                 Decimal  @db.Decimal(14, 3)
+  unitId              String
+  unit                Unit     @relation(fields: [unitId], references: [id])
+  unitCost            Decimal  @db.Decimal(14, 4)
+  discountAmount      Decimal  @default(0) @db.Decimal(14, 2)
+  taxAmount           Decimal  @default(0) @db.Decimal(14, 2)
+  lineTotal           Decimal  @db.Decimal(14, 2)
+}
+
+model Sale {
+  id                  String         @id @default(cuid())
+  invoiceNo           String
+  branchId            String
+  branch              Branch         @relation(fields: [branchId], references: [id])
+  customerId          String?
+  customer            Customer?      @relation(fields: [customerId], references: [id])
+  status              SalesStatus    @default(COMPLETED)
+  saleDate            DateTime       @default(now())
+  subTotal            Decimal        @db.Decimal(14, 2)
+  discountAmount      Decimal        @default(0) @db.Decimal(14, 2)
+  taxAmount           Decimal        @default(0) @db.Decimal(14, 2)
+  totalAmount         Decimal        @db.Decimal(14, 2)
+  paidAmount          Decimal        @default(0) @db.Decimal(14, 2)
+  dueAmount           Decimal        @default(0) @db.Decimal(14, 2)
+  cogsAmount          Decimal        @default(0) @db.Decimal(14, 2)
+  grossProfit         Decimal        @default(0) @db.Decimal(14, 2)
+  notes               String?
+  createdById         String
+  createdBy           User           @relation("saleUser", fields: [createdById], references: [id])
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  items               SaleItem[]
+  payments            Payment[]
+  checkPayments       CheckPayment[]
+  refunds             Refund[]
+  deliveries          Delivery[]
+  emailLogs           EmailLog[]
+  ledgerEntries       PaymentLedger[]
+
+  @@unique([branchId, invoiceNo])
+  @@index([saleDate])
+}
+
+model SaleItem {
+  id                  String   @id @default(cuid())
+  saleId              String
+  sale                Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId           String
+  product             Product  @relation(fields: [productId], references: [id])
+  qty                 Decimal  @db.Decimal(14, 3)
+  unitId              String
+  unit                Unit     @relation(fields: [unitId], references: [id])
+  unitPrice           Decimal  @db.Decimal(14, 4)
+  unitCost            Decimal  @db.Decimal(14, 4)
+  discountAmount      Decimal  @default(0) @db.Decimal(14, 2)
+  taxAmount           Decimal  @default(0) @db.Decimal(14, 2)
+  lineTotal           Decimal  @db.Decimal(14, 2)
+  refundLineItems    RefundItem[]
+}
+
+model PaymentAccount {
+  id                  String   @id @default(cuid())
+  branchId            String
+  branch              Branch   @relation(fields: [branchId], references: [id])
+  name                String
+  method              PaymentMethod
+  accountNo           String?
+  openingBalance      Decimal  @default(0) @db.Decimal(14, 2)
+  currentBalance      Decimal  @default(0) @db.Decimal(14, 2)
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  payments            Payment[]
+  ledgerEntries       PaymentLedger[]
+  expenses            Expense[]
+
+  @@unique([branchId, name])
+}
+
+model Payment {
+  id                  String       @id @default(cuid())
+  branchId            String
+  branch              Branch       @relation(fields: [branchId], references: [id])
+  saleId              String?
+  sale                Sale?        @relation(fields: [saleId], references: [id])
+  purchaseId          String?
+  purchase            Purchase?    @relation(fields: [purchaseId], references: [id])
+  refundId            String?
+  refund              Refund?      @relation(fields: [refundId], references: [id])
+  customerId          String?
+  customer            Customer?    @relation(fields: [customerId], references: [id])
+  supplierId          String?
+  supplier            Supplier?    @relation(fields: [supplierId], references: [id])
+  accountId           String
+  account             PaymentAccount @relation(fields: [accountId], references: [id])
+  method              PaymentMethod
+  amount              Decimal      @db.Decimal(14, 2)
+  referenceNo         String?
+  notes               String?
+  createdAt           DateTime     @default(now())
+
+  checkPayments       CheckPayment[]
+}
+
+model PaymentLedger {
+  id                  String           @id @default(cuid())
+  branchId            String
+  branch              Branch           @relation(fields: [branchId], references: [id])
+  transactionType     PaymentEntityType
+  direction           EntryDirection
+  amount              Decimal          @db.Decimal(14, 2)
+  method              PaymentMethod
+  accountId           String
+  account             PaymentAccount   @relation(fields: [accountId], references: [id])
+  saleId              String?
+  sale                Sale?            @relation(fields: [saleId], references: [id])
+  purchaseId          String?
+  purchase            Purchase?        @relation(fields: [purchaseId], references: [id])
+  refundId            String?
+  refund              Refund?          @relation(fields: [refundId], references: [id])
+  expenseId           String?
+  expense             Expense?         @relation(fields: [expenseId], references: [id])
+  customerId          String?
+  customer            Customer?        @relation(fields: [customerId], references: [id])
+  supplierId          String?
+  supplier            Supplier?        @relation(fields: [supplierId], references: [id])
+  referenceNo         String?
+  notes               String?
+  createdById         String
+  createdBy           User             @relation(fields: [createdById], references: [id])
+  createdAt           DateTime         @default(now())
+
+  @@index([branchId, createdAt])
+}
+
+model Refund {
+  id                  String       @id @default(cuid())
+  refundNo            String
+  branchId            String
+  branch              Branch       @relation(fields: [branchId], references: [id])
+  saleId              String
+  sale                Sale         @relation(fields: [saleId], references: [id])
+  customerId          String?
+  customer            Customer?    @relation(fields: [customerId], references: [id])
+  status              RefundStatus @default(CREATED)
+  refundAmount        Decimal      @db.Decimal(14, 2)
+  reason              String?
+  refundDate          DateTime     @default(now())
+  paymentMethod       PaymentMethod
+  createdById         String
+  createdBy           User         @relation("refundUser", fields: [createdById], references: [id])
+  createdAt           DateTime     @default(now())
+
+  items               RefundItem[]
+  payments            Payment[]
+  ledgerEntries       PaymentLedger[]
+}
+
+model RefundItem {
+  id                  String   @id @default(cuid())
+  refundId            String
+  refund              Refund   @relation(fields: [refundId], references: [id], onDelete: Cascade)
+  productId           String
+  product             Product  @relation(fields: [productId], references: [id])
+  qty                 Decimal  @db.Decimal(14, 3)
+  unitId              String
+  unit                Unit     @relation(fields: [unitId], references: [id])
+  unitPrice           Decimal  @db.Decimal(14, 4)
+  lineTotal           Decimal  @db.Decimal(14, 2)
+  saleItemId         String?
+  saleItem           SaleItem? @relation(fields: [saleItemId], references: [id])
+}
+
+model ExpenseCategory {
+  id                  String   @id @default(cuid())
+  branchId            String
+  branch              Branch   @relation(fields: [branchId], references: [id])
+  name                String
+  createdAt           DateTime @default(now())
+
+  expenses            Expense[]
+
+  @@unique([branchId, name])
+}
+
+model Expense {
+  id                  String   @id @default(cuid())
+  expenseNo           String
+  branchId            String
+  branch              Branch   @relation(fields: [branchId], references: [id])
+  categoryId          String
+  category            ExpenseCategory @relation(fields: [categoryId], references: [id])
+  description         String?
+  amount              Decimal  @db.Decimal(14, 2)
+  method              PaymentMethod
+  accountId           String
+  account             PaymentAccount @relation(fields: [accountId], references: [id])
+  date                DateTime
+  vendor              String?
+  receiptUrl          String?
+  createdById         String
+  createdBy           User     @relation(fields: [createdById], references: [id])
+  createdAt           DateTime @default(now())
+
+  ledgerEntries       PaymentLedger[]
+
+  @@unique([branchId, expenseNo])
+}
+
+model Quotation {
+  id                  String          @id @default(cuid())
+  quotationNo         String
+  branchId            String
+  branch              Branch          @relation(fields: [branchId], references: [id])
+  customerId          String?
+  customer            Customer?       @relation(fields: [customerId], references: [id])
+  status              QuotationStatus @default(DRAFT)
+  validUntil          DateTime?
+  subTotal            Decimal         @db.Decimal(14, 2)
+  discountAmount      Decimal         @default(0) @db.Decimal(14, 2)
+  taxAmount           Decimal         @default(0) @db.Decimal(14, 2)
+  totalAmount         Decimal         @db.Decimal(14, 2)
+  notes               String?
+  createdById         String
+  createdBy           User            @relation(fields: [createdById], references: [id])
+  createdAt           DateTime        @default(now())
+
+  items               QuotationItem[]
+
+  @@unique([branchId, quotationNo])
+}
+
+model QuotationItem {
+  id                  String   @id @default(cuid())
+  quotationId         String
+  quotation           Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  productId           String
+  product             Product  @relation(fields: [productId], references: [id])
+  qty                 Decimal  @db.Decimal(14, 3)
+  unitId              String
+  unit                Unit     @relation(fields: [unitId], references: [id])
+  unitPrice           Decimal  @db.Decimal(14, 4)
+  discountAmount      Decimal  @default(0) @db.Decimal(14, 2)
+  taxAmount           Decimal  @default(0) @db.Decimal(14, 2)
+  lineTotal           Decimal  @db.Decimal(14, 2)
+}
+
+model Delivery {
+  id                  String         @id @default(cuid())
+  deliveryNo          String
+  branchId            String
+  branch              Branch         @relation(fields: [branchId], references: [id])
+  saleId              String
+  sale                Sale           @relation(fields: [saleId], references: [id])
+  customerId          String?
+  customer            Customer?      @relation(fields: [customerId], references: [id])
+  address             String?
+  phone               String?
+  deliveryCharge      Decimal        @default(0) @db.Decimal(14, 2)
+  driver              String?
+  vehicle             String?
+  deliveryDate        DateTime?
+  status              DeliveryStatus @default(PENDING)
+  notes               String?
+  createdAt           DateTime       @default(now())
+
+  @@unique([branchId, deliveryNo])
+}
+
+model CheckPayment {
+  id                  String      @id @default(cuid())
+  branchId            String
+  branch              Branch      @relation(fields: [branchId], references: [id])
+  paymentId           String?
+  payment             Payment?    @relation(fields: [paymentId], references: [id])
+  checkNo             String
+  bankName            String
+  amount              Decimal     @db.Decimal(14, 2)
+  issueDate           DateTime
+  dueDate             DateTime
+  customerId          String?
+  customer            Customer?   @relation(fields: [customerId], references: [id])
+  saleId              String?
+  sale                Sale?       @relation(fields: [saleId], references: [id])
+  status              CheckStatus @default(PENDING)
+  notes               String?
+  createdAt           DateTime    @default(now())
+
+  @@index([branchId, status])
+}
+
+model DailyClosing {
+  id                  String   @id @default(cuid())
+  branchId            String
+  branch              Branch   @relation(fields: [branchId], references: [id])
+  closeDate           DateTime
+  openingCash         Decimal  @default(0) @db.Decimal(14, 2)
+  expectedCash        Decimal  @default(0) @db.Decimal(14, 2)
+  actualCash          Decimal  @default(0) @db.Decimal(14, 2)
+  differenceCash      Decimal  @default(0) @db.Decimal(14, 2)
+  differenceReason    String?
+  preparedById        String
+  preparedBy          User     @relation(fields: [preparedById], references: [id])
+  createdAt           DateTime @default(now())
+
+  @@unique([branchId, closeDate])
+}
+
+model EmailLog {
+  id                  String     @id @default(cuid())
+  saleId              String
+  sale                Sale       @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  emailTo             String
+  subject             String
+  status              EmailStatus @default(PENDING)
+  providerResponse    String?
+  createdAt           DateTime   @default(now())
+  sentAt              DateTime?
+}
+
+model AuditLog {
+  id                  String   @id @default(cuid())
+  branchId            String?
+  branch              Branch?  @relation(fields: [branchId], references: [id])
+  userId              String?
+  user                User?    @relation(fields: [userId], references: [id])
+  action              String
+  entity              String
+  entityId            String
+  oldValues           String?
+  newValues           String?
+  createdAt           DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([entity, entityId])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
