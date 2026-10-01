@@ -32,6 +32,23 @@ Next.js ERP and point-of-sale application backed by Prisma and Neon Postgres.
 
 The health endpoint is available at `/api/health`.
 
+## Vercel deployment
+
+Import this repository into Vercel with the framework preset set to
+**Next.js**. Vercel will use the default install and build commands; the
+`postinstall` script generates Prisma Client automatically.
+
+Add these Production environment variables in Vercel:
+
+- `DATABASE_URL` — Neon pooled connection string
+- `NEXTAUTH_URL` — your production Vercel URL
+- `NEXTAUTH_SECRET` — a long random secret
+- `BOOTSTRAP_SETUP_KEY` — a separate random setup key
+
+Optional email variables are `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`,
+`SMTP_PASSWORD`, and `SMTP_FROM`. After the first administrator is created,
+rotate or remove `BOOTSTRAP_SETUP_KEY`.
+
 ## Development
 
 ```bash
