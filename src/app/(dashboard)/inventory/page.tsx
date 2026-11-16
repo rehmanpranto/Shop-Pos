@@ -7,8 +7,10 @@ import { TableCard } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { TableSearch } from "@/components/ui/table-search";
+import { getTr } from "@/lib/i18n-server";
 
 export default async function InventoryPage() {
+  const tr = await getTr();
   const { branchId } = await getSessionContext();
   const logs = branchId
     ? await prisma.inventoryTransaction.findMany({
@@ -21,33 +23,33 @@ export default async function InventoryPage() {
 
   return (
     <div>
-      <PageHeader title="Inventory ledger" description="Every stock movement, newest first. To change stock, use Adjust on the Products page or record a purchase." />
+      <PageHeader title={tr("Inventory ledger")} description={tr("Every stock movement, newest first. To change stock, use Adjust on the Products page or record a purchase.")} />
 
       {logs.length === 0 ? (
         <TableCard>
-          <EmptyState icon={Warehouse} title="No stock movements yet" description="Sales, purchases, refunds and adjustments will be listed here." />
+          <EmptyState icon={Warehouse} title={tr("No stock movements yet")} description={tr("Sales, purchases, refunds and adjustments will be listed here.")} />
         </TableCard>
       ) : (
         <TableSearch
-          placeholder="Search product, reference or user"
+          placeholder={tr("Search product, reference or user")}
           filters={[
             { label: "In", value: "STOCK_IN" },
-            { label: "Out", value: "STOCK_OUT" },
-            { label: "Returned", value: "STOCK_RETURN" },
+            { label: tr("Out"), value: "STOCK_OUT" },
+            { label: tr("Returned"), value: "STOCK_RETURN" },
           ]}
         >
           <TableCard>
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Date</th>
-                  <th>Product</th>
-                  <th>Movement</th>
-                  <th>Reason</th>
-                  <th>Reference</th>
-                  <th className="num">Change</th>
-                  <th className="num">Stock after</th>
-                  <th>By</th>
+                  <th>{tr("Date")}</th>
+                  <th>{tr("Product")}</th>
+                  <th>{tr("Movement")}</th>
+                  <th>{tr("Reason")}</th>
+                  <th>{tr("Reference")}</th>
+                  <th className="num">{tr("Change")}</th>
+                  <th className="num">{tr("Stock after")}</th>
+                  <th>{tr("By")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -61,7 +63,7 @@ export default async function InventoryPage() {
                         <StatusBadge status={log.movementType} />
                       </td>
                       <td className="text-zinc-600">
-                        {humanize(log.reason)}
+                        {tr(humanize(log.reason))}
                         {log.note ? <span className="block text-xs text-zinc-500">{log.note}</span> : null}
                       </td>
                       <td className="text-zinc-600">{log.referenceNo}</td>

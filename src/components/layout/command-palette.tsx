@@ -6,8 +6,10 @@ import { CornerDownLeft, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useApp } from "./app-context";
 import { navForRole } from "./nav";
+import { useTr } from "@/components/layout/language";
 
 export function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const tr = useTr();
   const router = useRouter();
   const { user, t } = useApp();
   const role = user.role;
@@ -39,8 +41,8 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center px-4 pt-[12vh]" role="dialog" aria-modal="true" aria-label="Go to page">
-      <button type="button" aria-label="Close" tabIndex={-1} onClick={onClose} className="absolute inset-0 cursor-default bg-zinc-900/50" />
+    <div className="fixed inset-0 z-50 flex items-start justify-center px-4 pt-[12vh]" role="dialog" aria-modal="true" aria-label={tr("Go to page")}>
+      <button type="button" aria-label={tr("Close")} tabIndex={-1} onClick={onClose} className="absolute inset-0 cursor-default bg-zinc-900/50" />
       <div className="pop-in relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl">
         <div className="flex items-center gap-3 border-b border-zinc-200 px-4">
           <Search className="h-5 w-5 shrink-0 text-zinc-400" />
@@ -63,13 +65,13 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
                 go(results[selected].href);
               }
             }}
-            placeholder="Where do you want to go?"
-            aria-label="Search pages"
+            placeholder={tr("Where do you want to go?")}
+            aria-label={tr("Search pages")}
             className="h-14 w-full bg-transparent text-base text-zinc-900 placeholder:text-zinc-400 focus:outline-none"
           />
         </div>
         <ul className="max-h-[50vh] overflow-y-auto p-2">
-          {results.length === 0 ? <li className="px-3 py-6 text-center text-sm text-zinc-500">No page matches “{query}”.</li> : null}
+          {results.length === 0 ? <li className="px-3 py-6 text-center text-sm text-zinc-500">{tr("No page matches “")}{query}”.</li> : null}
           {results.map((item, i) => (
             <li key={item.href}>
               <button
@@ -81,7 +83,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
                 <item.icon className={cn("h-4 w-4 shrink-0", i === selected ? "text-brand" : "text-zinc-400")} />
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-semibold text-zinc-900">{t(item.key)}</span>
-                  <span className="block truncate text-xs text-zinc-500">{item.description}</span>
+                  <span className="block truncate text-xs text-zinc-500">{tr(item.description)}</span>
                 </span>
                 {i === selected ? <CornerDownLeft className="h-4 w-4 text-zinc-400" /> : null}
               </button>

@@ -6,6 +6,7 @@ import { sendJson, type ApiResult } from "@/lib/client-api";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Textarea } from "@/components/ui/field";
 import { useToast } from "@/components/ui/toast";
+import { useTr } from "@/components/layout/language";
 
 function InlineForm({
   submitLabel,
@@ -20,6 +21,7 @@ function InlineForm({
   onSubmit: (form: FormData) => Promise<ApiResult<unknown> | string>;
   children: ReactNode;
 }) {
+  const tr = useTr();
   const router = useRouter();
   const toast = useToast();
   const [saving, setSaving] = useState(false);
@@ -48,7 +50,7 @@ function InlineForm({
         </p>
       ) : null}
       <Button type="submit" disabled={saving} className="mt-5">
-        {saving ? "Saving…" : submitLabel}
+        {saving ? tr("Saving…") : submitLabel}
       </Button>
     </form>
   );
@@ -57,11 +59,12 @@ function InlineForm({
 export type BusinessDetails = { businessName: string; address: string; phone: string; email: string; vatNumber: string; invoiceFooter: string };
 
 export function BusinessForm({ details, canEdit }: { details: BusinessDetails; canEdit: boolean }) {
+  const tr = useTr();
   const value = (form: FormData, key: string) => String(form.get(key) ?? "").trim();
   return (
     <InlineForm
-      submitLabel="Save business details"
-      successMessage="Business details saved"
+      submitLabel={tr("Save business details")}
+      successMessage={tr("Business details saved")}
       onSubmit={(form) =>
         sendJson(
           "/api/settings",
@@ -78,23 +81,23 @@ export function BusinessForm({ details, canEdit }: { details: BusinessDetails; c
       }
     >
       <fieldset disabled={!canEdit} className="grid gap-4 sm:grid-cols-2">
-        <Field label="Business name" hint="Shown in the sidebar and on invoices." className="sm:col-span-2">
+        <Field label={tr("Business name")} hint={tr("Shown in the sidebar and on invoices.")} className="sm:col-span-2">
           <Input name="businessName" required maxLength={160} defaultValue={details.businessName} />
         </Field>
-        <Field label="Phone">
+        <Field label={tr("Phone")}>
           <Input name="phone" type="tel" maxLength={40} defaultValue={details.phone} />
         </Field>
-        <Field label="Email">
+        <Field label={tr("Email")}>
           <Input name="email" type="email" maxLength={160} defaultValue={details.email} />
         </Field>
-        <Field label="Address" className="sm:col-span-2">
+        <Field label={tr("Address")} className="sm:col-span-2">
           <Input name="address" maxLength={500} defaultValue={details.address} />
         </Field>
-        <Field label="VAT / BIN number">
+        <Field label={tr("VAT / BIN number")}>
           <Input name="vatNumber" maxLength={60} defaultValue={details.vatNumber} />
         </Field>
-        <Field label="Invoice footer note" className="sm:col-span-2">
-          <Textarea name="invoiceFooter" rows={2} maxLength={300} defaultValue={details.invoiceFooter} placeholder="e.g. Goods once sold are not returnable after 7 days." />
+        <Field label={tr("Invoice footer note")} className="sm:col-span-2">
+          <Textarea name="invoiceFooter" rows={2} maxLength={300} defaultValue={details.invoiceFooter} placeholder={tr("e.g. Goods once sold are not returnable after 7 days.")} />
         </Field>
       </fieldset>
     </InlineForm>
@@ -102,25 +105,26 @@ export function BusinessForm({ details, canEdit }: { details: BusinessDetails; c
 }
 
 export function PasswordForm() {
+  const tr = useTr();
   return (
     <InlineForm
-      submitLabel="Change password"
-      successMessage="Password changed"
+      submitLabel={tr("Change password")}
+      successMessage={tr("Password changed")}
       resetOnSuccess
       onSubmit={(form) => {
         const newPassword = String(form.get("newPassword") ?? "");
-        if (newPassword !== String(form.get("confirmPassword") ?? "")) return Promise.resolve("The two new passwords do not match.");
+        if (newPassword !== String(form.get("confirmPassword") ?? "")) return Promise.resolve(tr("The two new passwords do not match."));
         return sendJson("/api/account/password", { currentPassword: String(form.get("currentPassword") ?? ""), newPassword });
       }}
     >
       <div className="grid gap-4">
-        <Field label="Current password">
+        <Field label={tr("Current password")}>
           <Input name="currentPassword" type="password" required autoComplete="current-password" />
         </Field>
-        <Field label="New password" hint="At least 8 characters.">
+        <Field label={tr("New password")} hint={tr("At least 8 characters.")}>
           <Input name="newPassword" type="password" required minLength={8} autoComplete="new-password" />
         </Field>
-        <Field label="New password again">
+        <Field label={tr("New password again")}>
           <Input name="confirmPassword" type="password" required minLength={8} autoComplete="new-password" />
         </Field>
       </div>

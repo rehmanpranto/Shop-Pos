@@ -11,6 +11,7 @@ import { canOpen } from "@/lib/page-access";
 import { buttonClass } from "@/components/ui/button";
 import { useApp } from "./app-context";
 import { findNavItem } from "./nav";
+import { LanguageSwitch, useTr } from "@/components/layout/language";
 
 export type BranchOption = { id: string; name: string };
 
@@ -25,6 +26,7 @@ export function Topbar({
   onOpenMenu: () => void;
   onOpenSearch: () => void;
 }) {
+  const tr = useTr();
   const pathname = usePathname();
   const router = useRouter();
   const { user, language, setLanguage, t } = useApp();
@@ -66,25 +68,29 @@ export function Topbar({
   return (
     <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white/90 px-3 py-2.5 backdrop-blur print:hidden md:px-6">
       <div className="flex items-center gap-2 sm:gap-3">
-        <button type="button" onClick={onOpenMenu} aria-label="Open menu" className="rounded-lg p-2 text-zinc-600 hover:bg-zinc-100 md:hidden">
+        <button type="button" onClick={onOpenMenu} aria-label={tr("Open menu")} className="rounded-lg p-2 text-zinc-600 hover:bg-zinc-100 md:hidden">
           <Menu className="h-5 w-5" />
         </button>
 
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-base font-bold text-zinc-900">{current ? t(current.key) : "Rahman Hardware"}</h1>
-          <p className="hidden truncate text-xs text-zinc-500 sm:block">{current?.description ?? ""}</p>
+          <p className="hidden truncate text-xs text-zinc-500 sm:block">{current ? tr(current.description) : ""}</p>
         </div>
 
         <button
           type="button"
           onClick={onOpenSearch}
           className="flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-zinc-300 bg-white text-sm text-zinc-500 hover:bg-zinc-50 lg:w-auto lg:px-3"
-          aria-label="Search pages and actions"
+          aria-label={tr("Search pages and actions")}
         >
           <Search className="h-4 w-4" />
           <span className="hidden lg:inline">{t("top.goTo")}</span>
           <kbd className="hidden rounded border border-zinc-200 bg-zinc-50 px-1.5 text-[11px] font-semibold text-zinc-500 lg:inline">⌘K</kbd>
         </button>
+
+        <div className="hidden sm:block">
+          <LanguageSwitch />
+        </div>
 
         {canSell && pathname !== "/pos" ? (
           <Link href="/pos" aria-label={t("top.newSale")} className={buttonClass("accent", "md", "w-10 px-0 sm:w-auto sm:px-4")}>
@@ -99,7 +105,7 @@ export function Topbar({
             onClick={() => setMenuOpen((value) => !value)}
             aria-haspopup="menu"
             aria-expanded={menuOpen}
-            aria-label="Account menu"
+            aria-label={tr("Account menu")}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-bold text-white hover:bg-brand-dark"
           >
             {initials || "U"}
@@ -109,15 +115,13 @@ export function Topbar({
               <div className="border-b border-zinc-100 px-3 py-2">
                 <p className="truncate text-sm font-semibold text-zinc-900">{user.name}</p>
                 <p className="truncate text-xs text-zinc-500">{user.email}</p>
-                <p className="mt-1 text-xs font-semibold text-brand">{humanize(user.role)}</p>
+                <p className="mt-1 text-xs font-semibold text-brand">{tr(humanize(user.role))}</p>
               </div>
 
               {branches.length > 1 ? (
                 <div className="border-b border-zinc-100 py-1">
                   <p className="flex items-center gap-1.5 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
-                    <GitBranch className="h-3 w-3" />
-                    Working in
-                  </p>
+                    <GitBranch className="h-3 w-3" />{tr("Working in")}</p>
                   {branches.map((branch) => (
                     <button key={branch.id} type="button" role="menuitem" onClick={() => switchBranch(branch.id)} className={itemClass}>
                       <span className="min-w-0 flex-1 truncate">{branch.name}</span>

@@ -13,10 +13,12 @@ import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { TableSearch } from "@/components/ui/table-search";
 import { SaleActions } from "./sale-actions";
+import { getTr } from "@/lib/i18n-server";
 
 const LIMIT = 300;
 
 export default async function SalesPage() {
+  const tr = await getTr();
   const { user, branchId } = await getSessionContext();
   const today = startOfDay(new Date());
   const [sales, accounts, todayTotals, dueTotals] = branchId
@@ -45,45 +47,43 @@ export default async function SalesPage() {
   const canDeliver = user ? can(user.role, "deliveries:create") : false;
   const todayText = format(today, "yyyy-MM-dd");
   const newSale = canSell ? (
-    <Link href="/pos" className={buttonClass()}>
-      New sale
-    </Link>
+    <Link href="/pos" className={buttonClass()}>{tr("New sale")}</Link>
   ) : null;
 
   return (
     <div>
-      <PageHeader title="Sales" description="Every invoice, with refunds and cancellations." actions={newSale} />
+      <PageHeader title={tr("Sales")} description={tr("Every invoice, with refunds and cancellations.")} actions={newSale} />
 
       <div className="mb-4 grid grid-cols-2 gap-3 xl:grid-cols-4">
-        <StatCard label="Sold today" value={formatMoney(todayTotals?._sum.totalAmount)} hint={`${todayTotals?._count.id ?? 0} sales`} icon={Banknote} />
-        <StatCard label="Unpaid invoices" value={formatMoney(dueTotals?._sum.dueAmount)} hint={`${dueTotals?._count.id ?? 0} invoice${dueTotals?._count.id === 1 ? "" : "s"}`} icon={HandCoins} tone="amber" />
+        <StatCard label={tr("Sold today")} value={formatMoney(todayTotals?._sum.totalAmount)} hint={tr("{0} sales", todayTotals?._count.id ?? 0)} icon={Banknote} />
+        <StatCard label={tr("Unpaid invoices")} value={formatMoney(dueTotals?._sum.dueAmount)} hint={tr("{0} invoice{1}", dueTotals?._count.id ?? 0, dueTotals?._count.id === 1 ? "" : "s")} icon={HandCoins} tone="amber" />
       </div>
 
       {sales.length === 0 ? (
         <TableCard>
-          <EmptyState icon={Receipt} title="No sales yet" description="Sales you ring up in the POS appear here with their invoices." action={newSale} />
+          <EmptyState icon={Receipt} title={tr("No sales yet")} description={tr("Sales you ring up in the POS appear here with their invoices.")} action={newSale} />
         </TableCard>
       ) : (
         <TableSearch
-          placeholder="Search invoice, customer or cashier"
+          placeholder={tr("Search invoice, customer or cashier")}
           filters={[
-            { label: "Unpaid", value: "due" },
-            { label: "Refunded", value: "refunded" },
-            { label: "Cancelled", value: "cancelled" },
+            { label: tr("Unpaid"), value: "due" },
+            { label: tr("Refunded"), value: "refunded" },
+            { label: tr("Cancelled"), value: "cancelled" },
           ]}
         >
           <TableCard>
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Invoice</th>
-                  <th>Customer</th>
-                  <th>Cashier</th>
-                  <th className="num">Total</th>
-                  <th className="num">Paid</th>
-                  <th className="num">Due</th>
-                  <th>Status</th>
-                  <th className="num">Actions</th>
+                  <th>{tr("Invoice")}</th>
+                  <th>{tr("Customer")}</th>
+                  <th>{tr("Cashier")}</th>
+                  <th className="num">{tr("Total")}</th>
+                  <th className="num">{tr("Paid")}</th>
+                  <th className="num">{tr("Due")}</th>
+                  <th>{tr("Status")}</th>
+                  <th className="num">{tr("Actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -122,7 +122,7 @@ export default async function SalesPage() {
                             {s.customer?.name}
                           </Link>
                         ) : (
-                          "Walk-in"
+                          tr("Walk-in")
                         )}
                       </td>
                       <td className="text-zinc-600">{s.createdBy.name}</td>
@@ -132,10 +132,10 @@ export default async function SalesPage() {
                       <td>
                         <div className="flex flex-wrap gap-1">
                           <StatusBadge status={s.status} />
-                          {s.refunds.length > 0 ? <Badge tone="blue">Refunded</Badge> : null}
+                          {s.refunds.length > 0 ? <Badge tone="blue">{tr("Refunded")}</Badge> : null}
                           {s.deliveries[0] ? (
-                            <Link href={`/deliveries/${s.deliveries[0].id}`} title="Open the delivery challan">
-                              <Badge tone={s.deliveries[0].status === "DELIVERED" ? "green" : "amber"}>{s.deliveries[0].status === "DELIVERED" ? "Delivered" : "Delivery"}</Badge>
+                            <Link href={`/deliveries/${s.deliveries[0].id}`} title={tr("Open the delivery challan")}>
+                              <Badge tone={s.deliveries[0].status === "DELIVERED" ? "green" : "amber"}>{s.deliveries[0].status === "DELIVERED" ? tr("Delivered") : tr("Delivery")}</Badge>
                             </Link>
                           ) : null}
                         </div>
@@ -162,7 +162,7 @@ export default async function SalesPage() {
               </tbody>
             </table>
           </TableCard>
-          {sales.length === LIMIT ? <p className="mt-3 text-center text-xs text-zinc-500">Showing the latest {LIMIT} sales.</p> : null}
+          {sales.length === LIMIT ? <p className="mt-3 text-center text-xs text-zinc-500">{tr("Showing the latest")}{" "}{LIMIT}{" "}{tr("sales.")}</p> : null}
         </TableSearch>
       )}
     </div>

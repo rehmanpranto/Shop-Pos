@@ -16,8 +16,10 @@ import { StatCard } from "@/components/ui/stat-card";
 import { TableSearch } from "@/components/ui/table-search";
 import { CustomerCreateForm } from "./customer-create-form";
 import { ReceivePayment } from "./receive-payment";
+import { getTr } from "@/lib/i18n-server";
 
 export default async function CustomersPage() {
+  const tr = await getTr();
   const { user, branchId } = await getSessionContext();
   const setting = await prisma.businessSetting.findFirst({ select: { businessName: true } });
   const businessName = setting?.businessName ?? DEFAULT_BUSINESS_NAME;
@@ -34,30 +36,30 @@ export default async function CustomersPage() {
 
   return (
     <div>
-      <PageHeader title="Customers" description="Regular customers, their pricing and what they owe." actions={canAdd ? <CustomerCreateForm /> : null} />
+      <PageHeader title={tr("Customers")} description={tr("Regular customers, their pricing and what they owe.")} actions={canAdd ? <CustomerCreateForm /> : null} />
 
       <div className="mb-4 grid grid-cols-2 gap-3 xl:grid-cols-4">
-        <StatCard label="Customers" value={`${items.length}`} icon={Users} />
-        <StatCard label="Total owed to you" value={formatMoney(totalDue)} hint={`${owing.length} with dues`} icon={HandCoins} tone="amber" />
+        <StatCard label={tr("Customers")} value={`${items.length}`} icon={Users} />
+        <StatCard label={tr("Total owed to you")} value={formatMoney(totalDue)} hint={tr("{0} with dues", owing.length)} icon={HandCoins} tone="amber" />
       </div>
 
       {items.length === 0 ? (
         <TableCard>
-          <EmptyState icon={Users} title="No customers yet" description="Walk-in sales don't need one. Add customers you sell to on credit or at wholesale prices." action={canAdd ? <CustomerCreateForm /> : null} />
+          <EmptyState icon={Users} title={tr("No customers yet")} description={tr("Walk-in sales don't need one. Add customers you sell to on credit or at wholesale prices.")} action={canAdd ? <CustomerCreateForm /> : null} />
         </TableCard>
       ) : (
-        <TableSearch placeholder="Search name, phone or code" filters={[{ label: "Has dues", value: "due" }, { label: "Wholesale", value: "wholesale" }]}>
+        <TableSearch placeholder={tr("Search name, phone or code")} filters={[{ label: tr("Has dues"), value: "due" }, { label: tr("Wholesale"), value: "wholesale" }]}>
           <TableCard>
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Customer</th>
-                  <th>Phone</th>
-                  <th>Pricing</th>
-                  <th className="num">Sales</th>
-                  <th className="num">Credit limit</th>
-                  <th className="num">Owes</th>
-                  <th className="num">Actions</th>
+                  <th>{tr("Customer")}</th>
+                  <th>{tr("Phone")}</th>
+                  <th>{tr("Pricing")}</th>
+                  <th className="num">{tr("Sales")}</th>
+                  <th className="num">{tr("Credit limit")}</th>
+                  <th className="num">{tr("Owes")}</th>
+                  <th className="num">{tr("Actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -80,25 +82,21 @@ export default async function CustomersPage() {
                         </p>
                       </td>
                       <td className="text-zinc-600">{c.phone ?? "-"}</td>
-                      <td>{c.priceLevel === "WHOLESALE" ? <Badge tone="blue">Wholesale</Badge> : <Badge>Retail</Badge>}</td>
+                      <td>{c.priceLevel === "WHOLESALE" ? <Badge tone="blue">{tr("Wholesale")}</Badge> : <Badge>{tr("Retail")}</Badge>}</td>
                       <td className="num text-zinc-600">{c._count.sales}</td>
                       <td className="num text-zinc-600">{limit > 0 ? formatMoney(limit) : "-"}</td>
                       <td className="num">
                         {due > 0 ? <span className="font-bold text-amber-700">{formatMoney(due)}</span> : <span className="text-zinc-400">-</span>}
-                        {limit > 0 && due > limit ? <Badge tone="red" className="ml-1.5">Over limit</Badge> : null}
+                        {limit > 0 && due > limit ? <Badge tone="red" className="ml-1.5">{tr("Over limit")}</Badge> : null}
                       </td>
                       <td>
                         <div className="flex justify-end gap-1.5">
                           {due > 0 && reminder ? (
-                            <a href={reminder} target="_blank" rel="noreferrer" title="Send a WhatsApp reminder" className={buttonClass("secondary", "sm")}>
-                              <MessageCircle className="h-3.5 w-3.5" />
-                              Remind
-                            </a>
+                            <a href={reminder} target="_blank" rel="noreferrer" title={tr("Send a WhatsApp reminder")} className={buttonClass("secondary", "sm")}>
+                              <MessageCircle className="h-3.5 w-3.5" />{tr("Remind")}</a>
                           ) : null}
                           {due > 0 && canCollect ? <ReceivePayment customerId={c.id} name={c.name} outstanding={due} accounts={accounts} /> : null}
-                          <Link href={`/customers/${c.id}`} className={buttonClass("secondary", "sm")}>
-                            Statement
-                          </Link>
+                          <Link href={`/customers/${c.id}`} className={buttonClass("secondary", "sm")}>{tr("Statement")}</Link>
                         </div>
                       </td>
                     </tr>

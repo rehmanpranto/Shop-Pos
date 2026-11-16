@@ -12,8 +12,10 @@ import { PrintDocument } from "@/components/ui/document";
 import { PrintButton } from "@/components/ui/print-button";
 import { ResponsiveTable } from "@/components/ui/responsive-table";
 import { RejectQuotation } from "../quotation-status";
+import { getTr } from "@/lib/i18n-server";
 
 export default async function QuotationPage({ params }: { params: Promise<{ quotationId: string }> }) {
+  const tr = await getTr();
   const { quotationId } = await params;
   const { branchId } = await getSessionContext();
   if (!branchId) notFound();
@@ -41,46 +43,40 @@ export default async function QuotationPage({ params }: { params: Promise<{ quot
   return (
     <PrintDocument
       businessName={businessName}
-      businessLines={[setting?.address ?? "", setting?.phone ? `Phone: ${setting.phone}` : ""]}
-      title="Quotation"
+      businessLines={[setting?.address ?? "", setting?.phone ? tr("Phone: {0}", setting.phone) : ""]}
+      title={tr("Quotation")}
       number={quotation.quotationNo}
       meta={[
-        ["Date", formatDate(quotation.createdAt)],
-        ...(quotation.validUntil ? ([["Valid until", formatDate(quotation.validUntil)]] as Array<[string, string]>) : []),
+        [tr("Date"), formatDate(quotation.createdAt)],
+        ...(quotation.validUntil ? ([[tr("Valid until"), formatDate(quotation.validUntil)]] as Array<[string, string]>) : []),
       ]}
       actions={
         <>
           <Link href="/quotations" className={buttonClass("ghost", "md", "mr-auto")}>
-            <ArrowLeft className="h-4 w-4" />
-            Quotations
-          </Link>
+            <ArrowLeft className="h-4 w-4" />{tr("Quotations")}</Link>
           <StatusBadge status={expired ? "EXPIRED" : quotation.status} />
           {open ? <RejectQuotation quotationId={quotation.id} /> : null}
           {share ? (
             <a href={share} target="_blank" rel="noreferrer" className={buttonClass("secondary")}>
-              <MessageCircle className="h-4 w-4" />
-              Send on WhatsApp
-            </a>
+              <MessageCircle className="h-4 w-4" />{tr("Send on WhatsApp")}</a>
           ) : null}
           <PrintButton />
           {open ? (
             <Link href={`/pos?quotation=${quotation.id}`} className={buttonClass()}>
-              <ShoppingCart className="h-4 w-4" />
-              Make sale
-            </Link>
+              <ShoppingCart className="h-4 w-4" />{tr("Make sale")}</Link>
           ) : null}
         </>
       }
       footer={
         <>
           {quotation.notes ? <p className="mb-2">{quotation.notes}</p> : null}
-          <p>Prices are valid for the period shown above and depend on stock being available. Prepared by {quotation.createdBy.name}.</p>
+          <p>{tr("Prices are valid for the period shown above and depend on stock being available. Prepared by")}{" "}{quotation.createdBy.name}.</p>
         </>
       }
     >
       <div className="py-5">
-        <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Quotation for</p>
-        <p className="text-base font-bold text-zinc-900">{quotation.customer?.name ?? "Customer"}</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{tr("Quotation for")}</p>
+        <p className="text-base font-bold text-zinc-900">{quotation.customer?.name ?? tr("Customer")}</p>
         {[quotation.customer?.company, quotation.customer?.phone, quotation.customer?.address].filter(Boolean).map((line) => (
           <p key={line} className="text-sm text-zinc-600">
             {line}
@@ -93,10 +89,10 @@ export default async function QuotationPage({ params }: { params: Promise<{ quot
           <thead>
             <tr>
               <th>#</th>
-              <th>Item</th>
-              <th className="num">Quantity</th>
-              <th className="num">Price</th>
-              <th className="num">Amount</th>
+              <th>{tr("Item")}</th>
+              <th className="num">{tr("Quantity")}</th>
+              <th className="num">{tr("Price")}</th>
+              <th className="num">{tr("Amount")}</th>
             </tr>
           </thead>
           <tbody>
@@ -120,21 +116,21 @@ export default async function QuotationPage({ params }: { params: Promise<{ quot
 
       <dl className="ml-auto mt-4 w-full max-w-xs space-y-1 text-sm">
         <div className="flex justify-between">
-          <dt className="text-zinc-600">Subtotal</dt>
+          <dt className="text-zinc-600">{tr("Subtotal")}</dt>
           <dd className="tabular">{formatMoney(quotation.subTotal)}</dd>
         </div>
         {toNumber(quotation.discountAmount) > 0 ? (
           <div className="flex justify-between">
-            <dt className="text-zinc-600">Discount</dt>
+            <dt className="text-zinc-600">{tr("Discount")}</dt>
             <dd className="tabular">-{formatMoney(quotation.discountAmount)}</dd>
           </div>
         ) : null}
         <div className="flex items-baseline justify-between border-t border-zinc-300 pt-2">
-          <dt className="font-bold text-zinc-900">Total</dt>
+          <dt className="font-bold text-zinc-900">{tr("Total")}</dt>
           <dd className="tabular text-xl font-black text-zinc-900">{formatMoney(quotation.totalAmount)}</dd>
         </div>
       </dl>
-      <p className="sr-only">Status: {humanize(quotation.status)}</p>
+      <p className="sr-only">{tr("Status:")}{" "}{tr(humanize(quotation.status))}</p>
     </PrintDocument>
   );
 }

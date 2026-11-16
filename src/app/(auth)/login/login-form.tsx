@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { BarChart3, Eye, EyeOff, PackageCheck, ScanLine, Store } from "lucide-react";
+import { LanguageSwitch, useTr } from "@/components/layout/language";
 
 const highlights = [
   { icon: ScanLine, title: "Fast checkout", text: "Scan, take payment and print the invoice in seconds." },
@@ -12,6 +13,7 @@ const highlights = [
 ];
 
 export function LoginForm({ businessName }: { businessName: string }) {
+  const tr = useTr();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,7 +30,7 @@ export function LoginForm({ businessName }: { businessName: string }) {
 
     if (!result || result.error) {
       setLoading(false);
-      setError("That email and password don't match. Check them and try again.");
+      setError(tr("That email and password don't match. Check them and try again."));
       return;
     }
 
@@ -51,7 +53,7 @@ export function LoginForm({ businessName }: { businessName: string }) {
           <span className="text-lg font-bold">{businessName}</span>
         </div>
         <div className="relative">
-          <h1 className="max-w-md text-4xl font-black leading-tight tracking-tight">Run your whole shop from one screen.</h1>
+          <h1 className="max-w-md text-4xl font-black leading-tight tracking-tight">{tr("Run your whole shop from one screen.")}</h1>
           <ul className="mt-10 space-y-6">
             {highlights.map(({ icon: Icon, title, text }) => (
               <li key={title} className="flex items-start gap-4">
@@ -59,17 +61,20 @@ export function LoginForm({ businessName }: { businessName: string }) {
                   <Icon className="h-5 w-5" />
                 </span>
                 <span>
-                  <span className="block font-semibold">{title}</span>
-                  <span className="block text-sm text-slate-300">{text}</span>
+                  <span className="block font-semibold">{tr(title)}</span>
+                  <span className="block text-sm text-slate-300">{tr(text)}</span>
                 </span>
               </li>
             ))}
           </ul>
         </div>
-        <p className="relative text-xs text-slate-400">Sales · Inventory · Purchases · Customers · Reports</p>
+        <p className="relative text-xs text-slate-400">{tr("Sales · Inventory · Purchases · Customers · Reports")}</p>
       </aside>
 
-      <main className="flex items-center justify-center bg-background px-4 py-10">
+      <main className="relative flex items-center justify-center bg-background px-4 py-10">
+        <div className="absolute right-4 top-4">
+          <LanguageSwitch />
+        </div>
         <div className="w-full max-w-sm">
           <div className="mb-8 flex items-center gap-3 lg:hidden">
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-accent text-zinc-900">
@@ -78,16 +83,16 @@ export function LoginForm({ businessName }: { businessName: string }) {
             <span className="text-lg font-bold text-zinc-900">{businessName}</span>
           </div>
 
-          <h2 className="text-3xl font-black tracking-tight text-zinc-900">Sign in</h2>
-          <p className="mt-1 text-sm text-zinc-600">Use the email and password your admin gave you.</p>
+          <h2 className="text-3xl font-black tracking-tight text-zinc-900">{tr("Sign in")}</h2>
+          <p className="mt-1 text-sm text-zinc-600">{tr("Use the email and password your admin gave you.")}</p>
 
           <form className="mt-8 space-y-4" onSubmit={onSubmit}>
             <label className="block">
-              <span className="mb-1 block text-xs font-semibold text-zinc-700">Email</span>
+              <span className="mb-1 block text-xs font-semibold text-zinc-700">{tr("Email")}</span>
               <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" autoComplete="username" autoFocus required className={inputClass} />
             </label>
             <label className="block">
-              <span className="mb-1 block text-xs font-semibold text-zinc-700">Password</span>
+              <span className="mb-1 block text-xs font-semibold text-zinc-700">{tr("Password")}</span>
               <span className="relative block">
                 <input
                   value={password}
@@ -100,7 +105,7 @@ export function LoginForm({ businessName }: { businessName: string }) {
                 <button
                   type="button"
                   onClick={() => setShowPassword((value) => !value)}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-label={showPassword ? tr("Hide password") : tr("Show password")}
                   className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100"
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -115,7 +120,7 @@ export function LoginForm({ businessName }: { businessName: string }) {
             ) : null}
 
             <button type="submit" disabled={loading} className="h-11 w-full rounded-lg bg-brand font-semibold text-white transition hover:bg-brand-dark disabled:opacity-60">
-              {loading ? "Signing in…" : "Sign in"}
+              {loading ? tr("Signing in…") : tr("Sign in")}
             </button>
           </form>
         </div>

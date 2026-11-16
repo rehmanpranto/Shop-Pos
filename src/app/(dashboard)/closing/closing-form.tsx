@@ -7,8 +7,10 @@ import { formatMoney } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
 import { useToast } from "@/components/ui/toast";
+import { useTr } from "@/components/layout/language";
 
 export function ClosingForm({ expected, alreadyClosed }: { expected: number; alreadyClosed: boolean }) {
+  const tr = useTr();
   const router = useRouter();
   const toast = useToast();
   const [counted, setCounted] = useState("");
@@ -33,7 +35,7 @@ export function ClosingForm({ expected, alreadyClosed }: { expected: number; alr
 
   return (
     <form onSubmit={submit} className="grid gap-4">
-      <Field label="Cash counted in the drawer (৳)">
+      <Field label={tr("Cash counted in the drawer (৳)")}>
         <Input type="number" inputMode="decimal" min="0" step="0.01" required value={counted} onChange={(e) => setCounted(e.target.value)} className="tabular h-12 text-right text-lg font-bold" />
       </Field>
 
@@ -43,14 +45,14 @@ export function ClosingForm({ expected, alreadyClosed }: { expected: number; alr
             difference === 0 ? "bg-emerald-50 text-emerald-800" : difference > 0 ? "bg-sky-50 text-sky-800" : "bg-red-50 text-red-700"
           }`}
         >
-          <span>{difference === 0 ? "Matches exactly" : difference > 0 ? "Over by" : "Short by"}</span>
+          <span>{difference === 0 ? tr("Matches exactly") : difference > 0 ? tr("Over by") : tr("Short by")}</span>
           {difference !== 0 ? <span className="tabular">{formatMoney(Math.abs(difference))}</span> : null}
         </div>
       ) : null}
 
       {difference !== null && difference !== 0 ? (
-        <Field label="Reason for the difference">
-          <Input required maxLength={300} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. Gave wrong change" />
+        <Field label={tr("Reason for the difference")}>
+          <Input required maxLength={300} value={reason} onChange={(e) => setReason(e.target.value)} placeholder={tr("e.g. Gave wrong change")} />
         </Field>
       ) : null}
 
@@ -61,7 +63,7 @@ export function ClosingForm({ expected, alreadyClosed }: { expected: number; alr
       ) : null}
 
       <Button type="submit" size="lg" disabled={saving || counted === ""}>
-        {saving ? "Saving…" : alreadyClosed ? "Save a new count for today" : "Close the day"}
+        {saving ? tr("Saving…") : alreadyClosed ? tr("Save a new count for today") : tr("Close the day")}
       </Button>
     </form>
   );

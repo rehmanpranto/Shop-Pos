@@ -6,6 +6,7 @@ import { sendJson } from "@/lib/client-api";
 import { formatMoney } from "@/lib/format";
 import { Field, Input, Select, inputClass } from "@/components/ui/field";
 import { FormModal, number, optionalText } from "@/components/ui/form-modal";
+import { useTr } from "@/components/layout/language";
 
 type Customer = { id: string; name: string; priceLevel: string };
 export type QuotationProduct = {
@@ -22,6 +23,7 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
 const emptyLine = (key: number): Line => ({ key, productId: "", unitId: "", qty: "", unitPrice: "" });
 
 export function QuotationForm({ customers, products }: { customers: Customer[]; products: QuotationProduct[] }) {
+  const tr = useTr();
   const [customerId, setCustomerId] = useState("");
   const [lines, setLines] = useState<Line[]>([emptyLine(0)]);
   const [nextKey, setNextKey] = useState(1);
@@ -36,10 +38,10 @@ export function QuotationForm({ customers, products }: { customers: Customer[]; 
 
   async function submit(form: FormData) {
     const filled = lines.filter((line) => line.productId);
-    if (filled.length === 0) return "Add at least one product.";
-    if (filled.some((line) => !(Number(line.qty) > 0) || !(Number(line.unitPrice) > 0))) return "Every line needs a quantity and a price above zero.";
+    if (filled.length === 0) return tr("Add at least one product.");
+    if (filled.some((line) => !(Number(line.qty) > 0) || !(Number(line.unitPrice) > 0))) return tr("Every line needs a quantity and a price above zero.");
     const discountAmount = number(form, "discount");
-    if (discountAmount > subtotal) return "Discount is more than the total.";
+    if (discountAmount > subtotal) return tr("Discount is more than the total.");
 
     const result = await sendJson("/api/quotations", {
       customerId: customerId || undefined,
@@ -60,19 +62,17 @@ export function QuotationForm({ customers, products }: { customers: Customer[]; 
     <FormModal
       trigger={
         <>
-          <Plus className="h-4 w-4" />
-          New quotation
-        </>
+          <Plus className="h-4 w-4" />{tr("New quotation")}</>
       }
-      title="New quotation"
-      description="A price offer for a customer. Stock does not change until you turn it into a sale."
-      submitLabel="Save quotation"
-      successMessage="Quotation saved"
+      title={tr("New quotation")}
+      description={tr("A price offer for a customer. Stock does not change until you turn it into a sale.")}
+      submitLabel={tr("Save quotation")}
+      successMessage={tr("Quotation saved")}
       size="lg"
       onSubmit={submit}
     >
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Customer (optional)">
+        <Field label={tr("Customer (optional)")}>
           <Select
             value={customerId}
             onChange={(event) => {
@@ -87,28 +87,28 @@ export function QuotationForm({ customers, products }: { customers: Customer[]; 
               );
             }}
           >
-            <option value="">No customer</option>
+            <option value="">{tr("No customer")}</option>
             {customers.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
-                {c.priceLevel === "WHOLESALE" ? " (wholesale)" : ""}
+                {c.priceLevel === "WHOLESALE" ? tr(" (wholesale)") : ""}
               </option>
             ))}
           </Select>
         </Field>
-        <Field label="Valid until (optional)">
+        <Field label={tr("Valid until (optional)")}>
           <Input name="validUntil" type="date" />
         </Field>
       </div>
 
-      <p className="mb-2 mt-5 text-xs font-bold uppercase tracking-wide text-zinc-500">Items</p>
+      <p className="mb-2 mt-5 text-xs font-bold uppercase tracking-wide text-zinc-500">{tr("Items")}</p>
       <div className="space-y-2">
         {lines.map((line) => {
           const product = products.find((p) => p.id === line.productId);
           return (
             <div key={line.key} className="grid grid-cols-2 items-end gap-2 rounded-xl border border-zinc-200 p-2 sm:grid-cols-[minmax(0,1fr)_90px_90px_120px_110px_auto] sm:border-0 sm:p-0">
               <select
-                aria-label="Product"
+                aria-label={tr("Product")}
                 value={line.productId}
                 onChange={(event) => {
                   const picked = products.find((p) => p.id === event.target.value);
@@ -116,16 +116,16 @@ export function QuotationForm({ customers, products }: { customers: Customer[]; 
                 }}
                 className={`${inputClass} col-span-2 sm:col-span-1`}
               >
-                <option value="">Choose a product</option>
+                <option value="">{tr("Choose a product")}</option>
                 {products.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.name} ({p.sku})
                   </option>
                 ))}
               </select>
-              <input type="number" min="0" step="any" placeholder="Qty" aria-label="Quantity" value={line.qty} onChange={(event) => update(line.key, { qty: event.target.value })} className={`${inputClass} tabular text-right`} />
+              <input type="number" min="0" step="any" placeholder={tr("Qty")} aria-label={tr("Quantity")} value={line.qty} onChange={(event) => update(line.key, { qty: event.target.value })} className={`${inputClass} tabular text-right`} />
               <select
-                aria-label="Unit"
+                aria-label={tr("Unit")}
                 value={line.unitId}
                 disabled={!product}
                 onChange={(event) => update(line.key, { unitId: event.target.value, unitPrice: product ? String(priceOf(product, event.target.value, wholesale)) : line.unitPrice })}
@@ -141,8 +141,8 @@ export function QuotationForm({ customers, products }: { customers: Customer[]; 
                 type="number"
                 min="0"
                 step="any"
-                placeholder="Price each"
-                aria-label="Price each"
+                placeholder={tr("Price each")}
+                aria-label={tr("Price each")}
                 value={line.unitPrice}
                 onChange={(event) => update(line.key, { unitPrice: event.target.value })}
                 className={`${inputClass} tabular text-right`}
@@ -150,7 +150,7 @@ export function QuotationForm({ customers, products }: { customers: Customer[]; 
               <p className="tabular flex h-10 items-center justify-end text-sm font-semibold text-zinc-900">{formatMoney((Number(line.qty) || 0) * (Number(line.unitPrice) || 0))}</p>
               <button
                 type="button"
-                aria-label="Remove line"
+                aria-label={tr("Remove line")}
                 disabled={lines.length === 1}
                 onClick={() => setLines((old) => old.filter((l) => l.key !== line.key))}
                 className="flex h-10 w-10 items-center justify-center justify-self-end rounded-lg text-zinc-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-30"
@@ -169,21 +169,19 @@ export function QuotationForm({ customers, products }: { customers: Customer[]; 
         }}
         className="mt-2 inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-semibold text-brand hover:bg-brand-soft"
       >
-        <Plus className="h-4 w-4" />
-        Add another item
-      </button>
+        <Plus className="h-4 w-4" />{tr("Add another item")}</button>
 
       <div className="mt-4 flex items-baseline justify-between rounded-xl bg-zinc-50 px-4 py-3">
-        <span className="text-sm font-semibold text-zinc-700">Subtotal</span>
+        <span className="text-sm font-semibold text-zinc-700">{tr("Subtotal")}</span>
         <span className="tabular text-xl font-black text-zinc-900">{formatMoney(subtotal)}</span>
       </div>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        <Field label="Discount (৳)">
+        <Field label={tr("Discount (৳)")}>
           <Input name="discount" type="number" min="0" step="0.01" defaultValue="0" />
         </Field>
-        <Field label="Note for the customer (optional)">
-          <Input name="notes" maxLength={500} placeholder="e.g. Delivery within 3 days" />
+        <Field label={tr("Note for the customer (optional)")}>
+          <Input name="notes" maxLength={500} placeholder={tr("e.g. Delivery within 3 days")} />
         </Field>
       </div>
     </FormModal>

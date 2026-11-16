@@ -6,6 +6,7 @@ import { TableCard } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { TableSearch } from "@/components/ui/table-search";
+import { getTr } from "@/lib/i18n-server";
 
 function summarize(json: string | null): string {
   if (!json) return "";
@@ -21,35 +22,36 @@ function summarize(json: string | null): string {
 }
 
 export default async function AuditLogsPage() {
+  const tr = await getTr();
   const logs = await prisma.auditLog.findMany({ include: { user: { select: { name: true } } }, orderBy: { createdAt: "desc" }, take: 300 });
 
   return (
     <div>
-      <PageHeader title="Audit log" description="A record of who changed what. Entries cannot be edited." />
+      <PageHeader title={tr("Audit log")} description={tr("A record of who changed what. Entries cannot be edited.")} />
 
       {logs.length === 0 ? (
         <TableCard>
-          <EmptyState icon={History} title="Nothing logged yet" description="Sales, refunds, stock changes and settings changes are recorded here." />
+          <EmptyState icon={History} title={tr("Nothing logged yet")} description={tr("Sales, refunds, stock changes and settings changes are recorded here.")} />
         </TableCard>
       ) : (
-        <TableSearch placeholder="Search user, action or details">
+        <TableSearch placeholder={tr("Search user, action or details")}>
           <TableCard>
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Date</th>
-                  <th>User</th>
-                  <th>Action</th>
-                  <th>Details</th>
+                  <th>{tr("Date")}</th>
+                  <th>{tr("User")}</th>
+                  <th>{tr("Action")}</th>
+                  <th>{tr("Details")}</th>
                 </tr>
               </thead>
               <tbody>
                 {logs.map((l) => (
                   <tr key={l.id}>
                     <td className="whitespace-nowrap text-zinc-600">{formatDateTime(l.createdAt)}</td>
-                    <td className="font-semibold text-zinc-900">{l.user?.name ?? "System"}</td>
+                    <td className="font-semibold text-zinc-900">{l.user?.name ?? tr("System")}</td>
                     <td>
-                      <Badge>{humanize(l.action)}</Badge>
+                      <Badge>{tr(humanize(l.action))}</Badge>
                     </td>
                     <td className="max-w-md truncate text-xs text-zinc-600" title={summarize(l.newValues)}>
                       {summarize(l.newValues) || l.entity}

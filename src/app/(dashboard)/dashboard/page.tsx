@@ -10,13 +10,15 @@ import { Badge, StatusBadge } from "@/components/ui/badge";
 import { buttonClass } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PaymentDonut, PaymentLegend, SalesTrendChart, TopProductsChart } from "./charts";
+import { getTr } from "@/lib/i18n-server";
 
 const TREND_DAYS = 14;
 
 export default async function DashboardPage() {
+  const tr = await getTr();
   const { user, branchId } = await getSessionContext();
   if (!branchId) {
-    return <Card>No branch is set up yet. Run the setup step from the README first.</Card>;
+    return <Card>{tr("No branch is set up yet. Run the setup step from the README first.")}</Card>;
   }
 
   const now = new Date();
@@ -76,19 +78,19 @@ export default async function DashboardPage() {
 
   const productNames = new Map(products.map((p) => [p.id, p.name]));
   const topProducts = topItems.map((item) => ({
-    name: (productNames.get(item.productId) ?? "Unknown").slice(0, 18),
+    name: (productNames.get(item.productId) ?? tr("Unknown")).slice(0, 18),
     qty: toNumber(item._sum.qty),
   }));
-  const paymentData = payments.map((p) => ({ name: humanize(p.method), value: toNumber(p._sum.amount) })).filter((p) => p.value > 0);
+  const paymentData = payments.map((p) => ({ name: tr(humanize(p.method)), value: toNumber(p._sum.amount) })).filter((p) => p.value > 0);
 
   const steps = [
-    { done: products.length > 0, title: "Add your products", text: "Names, prices and opening stock.", href: "/products" },
-    { done: customerCount > 0, title: "Add a customer", text: "Needed for credit sales and dues.", href: "/customers" },
-    { done: recentSales.length > 0, title: "Make your first sale", text: "Open the POS and ring it up.", href: "/pos" },
+    { done: products.length > 0, title: tr("Add your products"), text: tr("Names, prices and opening stock."), href: "/products" },
+    { done: customerCount > 0, title: tr("Add a customer"), text: tr("Needed for credit sales and dues."), href: "/customers" },
+    { done: recentSales.length > 0, title: tr("Make your first sale"), text: tr("Open the POS and ring it up."), href: "/pos" },
   ];
   const showSetup = steps.some((step) => !step.done);
   const hour = now.getHours();
-  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const greeting = hour < 12 ? tr("Good morning") : hour < 17 ? tr("Good afternoon") : tr("Good evening");
 
   return (
     <div className="space-y-5">
@@ -99,16 +101,14 @@ export default async function DashboardPage() {
           </h2>
           <p className="mt-0.5 text-sm text-zinc-500">{format(now, "EEEE, d MMMM yyyy")}</p>
         </div>
-        <Link href="/reports" className={buttonClass("secondary")}>
-          Full reports
-          <ArrowRight className="h-4 w-4" />
+        <Link href="/reports" className={buttonClass("secondary")}>{tr("Full reports")}<ArrowRight className="h-4 w-4" />
         </Link>
       </div>
 
       {showSetup ? (
         <Card className="border-brand/20 bg-brand-soft/60">
-          <p className="text-base font-bold text-zinc-900">Get your shop ready</p>
-          <p className="mt-0.5 text-sm text-zinc-600">Three steps and you can start selling.</p>
+          <p className="text-base font-bold text-zinc-900">{tr("Get your shop ready")}</p>
+          <p className="mt-0.5 text-sm text-zinc-600">{tr("Three steps and you can start selling.")}</p>
           <div className="mt-4 grid gap-3 md:grid-cols-3">
             {steps.map((step, i) => (
               <Link key={step.title} href={step.href} className="flex items-start gap-3 rounded-xl border border-zinc-200 bg-white p-3 transition hover:border-brand">
@@ -132,38 +132,38 @@ export default async function DashboardPage() {
 
       <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <StatCard
-          label="Sales today"
+          label={tr("Sales today")}
           value={formatMoney(todayTotal)}
-          hint={change === null ? `${todaySales._count.id} sales` : `${change >= 0 ? "+" : ""}${change.toFixed(0)}% vs yesterday · ${todaySales._count.id} sales`}
+          hint={change === null ? tr("{0} sales", todaySales._count.id) : tr("{0}{1}% vs yesterday · {2} sales", change >= 0 ? "+" : "", change.toFixed(0), todaySales._count.id)}
           icon={Banknote}
         />
         <StatCard
-          label="Gross profit today"
+          label={tr("Gross profit today")}
           value={formatMoney(todayProfit)}
-          hint={todayTotal > 0 ? `${((todayProfit / todayTotal) * 100).toFixed(0)}% margin` : "No sales yet"}
+          hint={todayTotal > 0 ? tr("{0}% margin", ((todayProfit / todayTotal) * 100).toFixed(0)) : tr("No sales yet")}
           icon={TrendingUp}
           tone="green"
         />
         <StatCard
-          label="This month"
+          label={tr("This month")}
           value={formatMoney(monthSales._sum.totalAmount)}
-          hint={`${monthSales._count.id} sales · ${formatMoney(monthSales._sum.grossProfit)} profit`}
+          hint={tr("{0} sales · {1} profit", monthSales._count.id, formatMoney(monthSales._sum.grossProfit))}
           icon={Receipt}
         />
         <StatCard
-          label="Customers owe you"
+          label={tr("Customers owe you")}
           value={formatMoney(receivables._sum.outstanding)}
-          hint={`${receivables._count.id} customer${receivables._count.id === 1 ? "" : "s"} with dues`}
+          hint={tr("{0} customer{1} with dues", receivables._count.id, receivables._count.id === 1 ? "" : "s")}
           icon={HandCoins}
           tone="amber"
         />
-        <StatCard label="Expenses today" value={formatMoney(todayExpenses._sum.amount)} icon={Wallet} tone="neutral" />
-        <StatCard label="Refunds today" value={formatMoney(todayRefunds._sum.refundAmount)} icon={Receipt} tone="neutral" />
-        <StatCard label="Stock value" value={formatMoney(stockValue)} hint={`${products.length} products at cost`} icon={Package} tone="neutral" />
+        <StatCard label={tr("Expenses today")} value={formatMoney(todayExpenses._sum.amount)} icon={Wallet} tone="neutral" />
+        <StatCard label={tr("Refunds today")} value={formatMoney(todayRefunds._sum.refundAmount)} icon={Receipt} tone="neutral" />
+        <StatCard label={tr("Stock value")} value={formatMoney(stockValue)} hint={tr("{0} products at cost", products.length)} icon={Package} tone="neutral" />
         <StatCard
-          label="Needs restocking"
+          label={tr("Needs restocking")}
           value={`${outOfStock.length + lowStock.length}`}
-          hint={`${outOfStock.length} out of stock · ${lowStock.length} low`}
+          hint={tr("{0} out of stock · {1} low", outOfStock.length, lowStock.length)}
           icon={AlertTriangle}
           tone={outOfStock.length + lowStock.length > 0 ? "red" : "green"}
         />
@@ -172,16 +172,12 @@ export default async function DashboardPage() {
       <section className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <Card className="xl:col-span-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <CardTitle>Sales, last {TREND_DAYS} days</CardTitle>
+            <CardTitle>{tr("Sales, last")}{" "}{TREND_DAYS}{" "}{tr("days")}</CardTitle>
             <div className="flex items-center gap-4 text-xs text-zinc-500">
               <span className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full bg-brand" />
-                Sales
-              </span>
+                <span className="h-2.5 w-2.5 rounded-full bg-brand" />{tr("Sales")}</span>
               <span className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full bg-brand-accent" />
-                Gross profit
-              </span>
+                <span className="h-2.5 w-2.5 rounded-full bg-brand-accent" />{tr("Gross profit")}</span>
             </div>
           </div>
           <div className="mt-4 h-64">
@@ -190,9 +186,9 @@ export default async function DashboardPage() {
         </Card>
 
         <Card>
-          <CardTitle>Payments received today</CardTitle>
+          <CardTitle>{tr("Payments received today")}</CardTitle>
           {paymentData.length === 0 ? (
-            <p className="mt-10 text-center text-sm text-zinc-500">No payments yet today.</p>
+            <p className="mt-10 text-center text-sm text-zinc-500">{tr("No payments yet today.")}</p>
           ) : (
             <>
               <div className="mt-2 h-40">
@@ -209,26 +205,24 @@ export default async function DashboardPage() {
       <section className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <Card className="xl:col-span-1">
           <div className="flex items-center justify-between">
-            <CardTitle>Recent sales</CardTitle>
-            <Link href="/sales" className="text-xs font-semibold text-brand hover:underline">
-              View all
-            </Link>
+            <CardTitle>{tr("Recent sales")}</CardTitle>
+            <Link href="/sales" className="text-xs font-semibold text-brand hover:underline">{tr("View all")}</Link>
           </div>
           {recentSales.length === 0 ? (
-            <p className="mt-10 text-center text-sm text-zinc-500">No sales yet.</p>
+            <p className="mt-10 text-center text-sm text-zinc-500">{tr("No sales yet.")}</p>
           ) : (
             <ul className="mt-3 divide-y divide-zinc-100">
               {recentSales.map((sale) => (
                 <li key={sale.id} className="flex items-center justify-between gap-3 py-2.5">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold text-zinc-900">
-                      {sale.invoiceNo} <span className="font-normal text-zinc-500">· {sale.customer?.name ?? "Walk-in"}</span>
+                      {sale.invoiceNo} <span className="font-normal text-zinc-500">· {sale.customer?.name ?? tr("Walk-in")}</span>
                     </p>
                     <p className="text-xs text-zinc-500">{formatDateTime(sale.saleDate)}</p>
                   </div>
                   <div className="text-right">
                     <p className="tabular text-sm font-bold text-zinc-900">{formatMoney(sale.totalAmount)}</p>
-                    {sale.status !== "COMPLETED" ? <StatusBadge status={sale.status} /> : toNumber(sale.dueAmount) > 0 ? <Badge tone="amber">Due {formatMoney(sale.dueAmount)}</Badge> : null}
+                    {sale.status !== "COMPLETED" ? <StatusBadge status={sale.status} /> : toNumber(sale.dueAmount) > 0 ? <Badge tone="amber">{tr("Due")}{" "}{formatMoney(sale.dueAmount)}</Badge> : null}
                   </div>
                 </li>
               ))}
@@ -238,13 +232,11 @@ export default async function DashboardPage() {
 
         <Card>
           <div className="flex items-center justify-between">
-            <CardTitle>Restock soon</CardTitle>
-            <Link href="/products" className="text-xs font-semibold text-brand hover:underline">
-              Products
-            </Link>
+            <CardTitle>{tr("Restock soon")}</CardTitle>
+            <Link href="/products" className="text-xs font-semibold text-brand hover:underline">{tr("Products")}</Link>
           </div>
           {attention.length === 0 ? (
-            <p className="mt-10 text-center text-sm text-zinc-500">{products.length === 0 ? "No products yet." : "All products are above their minimum stock."}</p>
+            <p className="mt-10 text-center text-sm text-zinc-500">{products.length === 0 ? tr("No products yet.") : tr("All products are above their minimum stock.")}</p>
           ) : (
             <ul className="mt-3 divide-y divide-zinc-100">
               {attention.map((p) => (
@@ -252,10 +244,10 @@ export default async function DashboardPage() {
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold text-zinc-900">{p.name}</p>
                     <p className="text-xs text-zinc-500">
-                      {p.sku} · minimum {formatQty(p.minStock)} {p.baseUnit.code}
+                      {p.sku}{" "}{tr("· minimum")}{" "}{formatQty(p.minStock)} {p.baseUnit.code}
                     </p>
                   </div>
-                  {toNumber(p.stockQty) <= 0 ? <Badge tone="red">Out of stock</Badge> : <Badge tone="amber">{formatQty(p.stockQty)} left</Badge>}
+                  {toNumber(p.stockQty) <= 0 ? <Badge tone="red">{tr("Out of stock")}</Badge> : <Badge tone="amber">{formatQty(p.stockQty)}{" "}{tr("left")}</Badge>}
                 </li>
               ))}
             </ul>
@@ -263,9 +255,9 @@ export default async function DashboardPage() {
         </Card>
 
         <Card>
-          <CardTitle>Best sellers, last {TREND_DAYS} days</CardTitle>
+          <CardTitle>{tr("Best sellers, last")}{" "}{TREND_DAYS}{" "}{tr("days")}</CardTitle>
           {topProducts.length === 0 ? (
-            <p className="mt-10 text-center text-sm text-zinc-500">Nothing sold yet.</p>
+            <p className="mt-10 text-center text-sm text-zinc-500">{tr("Nothing sold yet.")}</p>
           ) : (
             <div className="mt-3 h-56">
               <TopProductsChart data={topProducts} />

@@ -11,8 +11,10 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { TableSearch } from "@/components/ui/table-search";
 import { QuotationForm, type QuotationProduct } from "./quotation-form";
+import { getTr } from "@/lib/i18n-server";
 
 export default async function QuotationsPage() {
+  const tr = await getTr();
   const { user, branchId } = await getSessionContext();
   if (!branchId) return null;
 
@@ -43,30 +45,30 @@ export default async function QuotationsPage() {
 
   return (
     <div>
-      <PageHeader title="Quotations" description="Price offers for customers. Turn an accepted one into a sale with one click." actions={form} />
+      <PageHeader title={tr("Quotations")} description={tr("Price offers for customers. Turn an accepted one into a sale with one click.")} actions={form} />
 
       {items.length === 0 ? (
         <TableCard>
           <EmptyState
             icon={ClipboardList}
-            title="No quotations yet"
-            description={formProducts.length === 0 ? "Add products first, then you can quote prices for them." : "Create a quotation when a customer asks for prices before buying."}
+            title={tr("No quotations yet")}
+            description={formProducts.length === 0 ? tr("Add products first, then you can quote prices for them.") : tr("Create a quotation when a customer asks for prices before buying.")}
             action={form}
           />
         </TableCard>
       ) : (
-        <TableSearch placeholder="Search quotation or customer" filters={[{ label: "Open", value: "open" }, { label: "Accepted", value: "ACCEPTED" }, { label: "Rejected", value: "REJECTED" }]}>
+        <TableSearch placeholder={tr("Search quotation or customer")} filters={[{ label: tr("Open"), value: "open" }, { label: tr("Accepted"), value: "ACCEPTED" }, { label: tr("Rejected"), value: "REJECTED" }]}>
           <TableCard>
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Quotation</th>
-                  <th>Customer</th>
-                  <th>Valid until</th>
-                  <th className="num">Items</th>
-                  <th className="num">Total</th>
-                  <th>Status</th>
-                  <th className="num">Actions</th>
+                  <th>{tr("Quotation")}</th>
+                  <th>{tr("Customer")}</th>
+                  <th>{tr("Valid until")}</th>
+                  <th className="num">{tr("Items")}</th>
+                  <th className="num">{tr("Total")}</th>
+                  <th>{tr("Status")}</th>
+                  <th className="num">{tr("Actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -93,13 +95,9 @@ export default async function QuotationsPage() {
                       <td>
                         <div className="flex justify-end gap-1.5">
                           {open ? (
-                            <Link href={`/pos?quotation=${q.id}`} className={buttonClass("primary", "sm")}>
-                              Make sale
-                            </Link>
+                            <Link href={`/pos?quotation=${q.id}`} className={buttonClass("primary", "sm")}>{tr("Make sale")}</Link>
                           ) : null}
-                          <Link href={`/quotations/${q.id}`} className={buttonClass("secondary", "sm")}>
-                            View
-                          </Link>
+                          <Link href={`/quotations/${q.id}`} className={buttonClass("secondary", "sm")}>{tr("View")}</Link>
                         </div>
                       </td>
                     </tr>

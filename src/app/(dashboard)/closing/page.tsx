@@ -8,10 +8,12 @@ import { Card, TableCard } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { getCashPosition } from "@/server/services/closing";
 import { ClosingForm } from "./closing-form";
+import { getTr } from "@/lib/i18n-server";
 
 export default async function ClosingPage() {
+  const tr = await getTr();
   const { user, branchId } = await getSessionContext();
-  if (!branchId) return <Card>No branch is set up yet.</Card>;
+  if (!branchId) return <Card>{tr("No branch is set up yet.")}</Card>;
 
   const today = startOfDay(new Date());
   const [position, history] = await Promise.all([
@@ -24,20 +26,20 @@ export default async function ClosingPage() {
 
   return (
     <div>
-      <PageHeader title="Day closing" description={`Count the cash drawer and compare it with what the system expects. ${format(today, "EEEE, d MMMM yyyy")}.`} />
+      <PageHeader title={tr("Day closing")} description={tr("Count the cash drawer and compare it with what the system expects. {0}.", format(today, "EEEE, d MMMM yyyy"))} />
 
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
         <Card>
-          <h3 className="text-base font-bold text-zinc-900">Cash today</h3>
+          <h3 className="text-base font-bold text-zinc-900">{tr("Cash today")}</h3>
           <dl className="mt-3 space-y-2 text-sm">
             <div className="flex justify-between">
-              <dt className="text-zinc-600">In the drawer at the start of the day</dt>
+              <dt className="text-zinc-600">{tr("In the drawer at the start of the day")}</dt>
               <dd className="tabular font-semibold">{formatMoney(position.opening.toNumber())}</dd>
             </div>
             {position.lines.map((line) => (
               <div key={`${line.type}-${line.direction}`} className="flex justify-between">
                 <dt className="text-zinc-600">
-                  {line.direction === "DEBIT" ? "Cash in" : "Cash out"}: {humanize(line.type).toLowerCase()}
+                  {line.direction === "DEBIT" ? tr("Cash in") : tr("Cash out")}: {tr(humanize(line.type)).toLowerCase()}
                 </dt>
                 <dd className={`tabular font-semibold ${line.direction === "DEBIT" ? "text-emerald-700" : "text-red-700"}`}>
                   {line.direction === "DEBIT" ? "+" : "-"}
@@ -45,43 +47,41 @@ export default async function ClosingPage() {
                 </dd>
               </div>
             ))}
-            {position.lines.length === 0 ? <p className="text-zinc-500">No cash has moved today.</p> : null}
+            {position.lines.length === 0 ? <p className="text-zinc-500">{tr("No cash has moved today.")}</p> : null}
             <div className="flex items-baseline justify-between border-t border-zinc-200 pt-3">
-              <dt className="text-base font-bold text-zinc-900">Should be in the drawer</dt>
+              <dt className="text-base font-bold text-zinc-900">{tr("Should be in the drawer")}</dt>
               <dd className="tabular text-2xl font-black text-zinc-900">{formatMoney(expected)}</dd>
             </div>
           </dl>
-          <p className="mt-3 text-xs text-zinc-500">Only cash accounts are counted. bKash, Nagad, card and bank payments are not part of the drawer.</p>
+          <p className="mt-3 text-xs text-zinc-500">{tr("Only cash accounts are counted. bKash, Nagad, card and bank payments are not part of the drawer.")}</p>
         </Card>
 
         <Card>
-          <h3 className="text-base font-bold text-zinc-900">{todayClosing ? "Today is closed" : "Close the day"}</h3>
+          <h3 className="text-base font-bold text-zinc-900">{todayClosing ? tr("Today is closed") : tr("Close the day")}</h3>
           {todayClosing ? (
             <p className="mb-4 mt-1 text-sm text-zinc-600">
-              {todayClosing.preparedBy.name} counted {formatMoney(todayClosing.actualCash)} against {formatMoney(todayClosing.expectedCash)} expected. Sales made after that are not
-              included; count again to update it.
-            </p>
+              {todayClosing.preparedBy.name}{" "}{tr("counted")}{" "}{formatMoney(todayClosing.actualCash)}{" "}{tr("against")}{" "}{formatMoney(todayClosing.expectedCash)}{" "}{tr("expected. Sales made after that are not included; count again to update it.")}</p>
           ) : (
-            <p className="mb-4 mt-1 text-sm text-zinc-600">Count the notes and coins, then enter the total.</p>
+            <p className="mb-4 mt-1 text-sm text-zinc-600">{tr("Count the notes and coins, then enter the total.")}</p>
           )}
-          {canClose ? <ClosingForm expected={expected} alreadyClosed={Boolean(todayClosing)} /> : <p className="text-sm text-zinc-500">Your role can view closings but not record them.</p>}
+          {canClose ? <ClosingForm expected={expected} alreadyClosed={Boolean(todayClosing)} /> : <p className="text-sm text-zinc-500">{tr("Your role can view closings but not record them.")}</p>}
         </Card>
       </div>
 
-      <h3 className="mb-3 mt-6 text-base font-bold text-zinc-900">Past closings</h3>
+      <h3 className="mb-3 mt-6 text-base font-bold text-zinc-900">{tr("Past closings")}</h3>
       <TableCard>
         {history.length === 0 ? (
-          <p className="py-10 text-center text-sm text-zinc-500">No day has been closed yet.</p>
+          <p className="py-10 text-center text-sm text-zinc-500">{tr("No day has been closed yet.")}</p>
         ) : (
           <table className="data-table">
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Closed by</th>
-                <th className="num">Expected</th>
-                <th className="num">Counted</th>
-                <th className="num">Difference</th>
-                <th>Reason</th>
+                <th>{tr("Date")}</th>
+                <th>{tr("Closed by")}</th>
+                <th className="num">{tr("Expected")}</th>
+                <th className="num">{tr("Counted")}</th>
+                <th className="num">{tr("Difference")}</th>
+                <th>{tr("Reason")}</th>
               </tr>
             </thead>
             <tbody>
@@ -94,7 +94,7 @@ export default async function ClosingPage() {
                     <td className="num">{formatMoney(closing.expectedCash)}</td>
                     <td className="num">{formatMoney(closing.actualCash)}</td>
                     <td className="num">
-                      {difference === 0 ? <Badge tone="green">Matched</Badge> : <Badge tone={difference > 0 ? "blue" : "red"}>{`${difference > 0 ? "Over" : "Short"} ${formatMoney(Math.abs(difference))}`}</Badge>}
+                      {difference === 0 ? <Badge tone="green">{tr("Matched")}</Badge> : <Badge tone={difference > 0 ? "blue" : "red"}>{`${difference > 0 ? tr("Over") : tr("Short")} ${formatMoney(Math.abs(difference))}`}</Badge>}
                     </td>
                     <td className="text-zinc-600">{closing.differenceReason ?? "-"}</td>
                   </tr>

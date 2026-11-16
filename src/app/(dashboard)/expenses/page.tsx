@@ -10,8 +10,10 @@ import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { TableSearch } from "@/components/ui/table-search";
 import { ExpenseForm } from "./expense-form";
+import { getTr } from "@/lib/i18n-server";
 
 export default async function ExpensesPage() {
+  const tr = await getTr();
   const { branchId } = await getSessionContext();
   const now = new Date();
   const [items, categories, accounts, month] = branchId
@@ -30,29 +32,29 @@ export default async function ExpensesPage() {
 
   return (
     <div>
-      <PageHeader title="Expenses" description="Rent, salaries, bills and other running costs." actions={form} />
+      <PageHeader title={tr("Expenses")} description={tr("Rent, salaries, bills and other running costs.")} actions={form} />
 
       <div className="mb-4 grid grid-cols-2 gap-3 xl:grid-cols-4">
-        <StatCard label={`Spent in ${format(now, "MMMM")}`} value={formatMoney(monthTotal)} icon={Wallet} />
-        <StatCard label="Biggest cost this month" value={biggestName ?? "-"} hint={biggest ? formatMoney(biggest._sum.amount) : undefined} icon={CalendarDays} tone="neutral" />
+        <StatCard label={tr("Spent in {0}", format(now, "MMMM"))} value={formatMoney(monthTotal)} icon={Wallet} />
+        <StatCard label={tr("Biggest cost this month")} value={biggestName ?? "-"} hint={biggest ? formatMoney(biggest._sum.amount) : undefined} icon={CalendarDays} tone="neutral" />
       </div>
 
       {items.length === 0 ? (
         <TableCard>
-          <EmptyState icon={Wallet} title="No expenses recorded" description="Record costs here so your reports show real profit, not just sales." action={form} />
+          <EmptyState icon={Wallet} title={tr("No expenses recorded")} description={tr("Record costs here so your reports show real profit, not just sales.")} action={form} />
         </TableCard>
       ) : (
-        <TableSearch placeholder="Search category, payee or note">
+        <TableSearch placeholder={tr("Search category, payee or note")}>
           <TableCard>
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Date</th>
-                  <th>Category</th>
-                  <th>Paid to</th>
-                  <th>Note</th>
-                  <th>Paid from</th>
-                  <th className="num">Amount</th>
+                  <th>{tr("Date")}</th>
+                  <th>{tr("Category")}</th>
+                  <th>{tr("Paid to")}</th>
+                  <th>{tr("Note")}</th>
+                  <th>{tr("Paid from")}</th>
+                  <th className="num">{tr("Amount")}</th>
                 </tr>
               </thead>
               <tbody>

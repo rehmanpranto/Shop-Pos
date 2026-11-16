@@ -3,6 +3,7 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTr } from "@/components/layout/language";
 
 type Filter = { label: string; value: string };
 
@@ -19,6 +20,7 @@ export function TableSearch({
   filters?: Filter[];
   children: ReactNode;
 }) {
+  const tr = useTr();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState("");
   const [tag, setTag] = useState("");
@@ -49,14 +51,14 @@ export function TableSearch({
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder={placeholder}
-            aria-label={placeholder}
+            placeholder={tr(placeholder)}
+            aria-label={tr(placeholder)}
             className="h-10 w-full rounded-lg border border-zinc-300 bg-white pl-9 pr-3 text-sm placeholder:text-zinc-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
           />
         </div>
         {filters.length > 0 ? (
           <div className="-mx-3 flex gap-1.5 overflow-x-auto px-3 sm:mx-0 sm:flex-wrap sm:px-0">
-            {[{ label: "All", value: "" }, ...filters].map((filter) => (
+            {[{ label: tr("All"), value: "" }, ...filters].map((filter) => (
               <button
                 key={filter.value}
                 type="button"
@@ -74,15 +76,13 @@ export function TableSearch({
         ) : null}
         {filtering ? (
           <p className="text-xs text-zinc-500 sm:ml-auto">
-            {counts.shown} of {counts.total}
+            {counts.shown}{" "}{tr("of")}{" "}{counts.total}
           </p>
         ) : null}
       </div>
       <div ref={wrapperRef}>{children}</div>
       {filtering && counts.shown === 0 && counts.total > 0 ? (
-        <p className="mt-3 rounded-xl border border-dashed border-zinc-300 bg-white px-4 py-6 text-center text-sm text-zinc-500">
-          Nothing matches. Try a different search or filter.
-        </p>
+        <p className="mt-3 rounded-xl border border-dashed border-zinc-300 bg-white px-4 py-6 text-center text-sm text-zinc-500">{tr("Nothing matches. Try a different search or filter.")}</p>
       ) : null}
     </div>
   );

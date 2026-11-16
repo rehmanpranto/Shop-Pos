@@ -1,3 +1,5 @@
+import { bnPhrases } from "./i18n-phrases";
+
 export type Language = "en" | "bn";
 
 const en = {
@@ -121,6 +123,17 @@ const bn: Record<TranslationKey, string> = {
 };
 
 export const LANGUAGE_COOKIE = "lang";
+
+export type Translate = (text: string, ...values: Array<string | number>) => string;
+
+/**
+ * Translates a piece of English on-screen text. The English text itself is the lookup key,
+ * so anything without a Bangla entry simply stays in English. {0}, {1} … are filled from `values`.
+ */
+export function translatePhrase(language: Language, text: string, values: Array<string | number> = []): string {
+  const template = language === "bn" ? (bnPhrases[text] ?? text) : text;
+  return values.length ? template.replace(/\{(\d+)\}/g, (_match, index) => String(values[Number(index)] ?? "")) : template;
+}
 
 export function translate(language: Language, key: TranslationKey): string {
   return (language === "bn" ? bn : en)[key];

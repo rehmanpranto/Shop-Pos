@@ -1,11 +1,12 @@
 import { ReactNode } from "react";
 import { formatDate, formatMoney } from "@/lib/format";
 import { ResponsiveTable } from "./responsive-table";
+import { getTr } from "@/lib/i18n-server";
 
 export type StatementRow = { date: Date; description: string; reference?: string; charge: number; payment: number };
 
 /** A printable account statement with a running balance. */
-export function Statement({
+export async function Statement({
   businessName,
   businessLine,
   title,
@@ -24,6 +25,7 @@ export function Statement({
   balanceLabel: string;
   actions?: ReactNode;
 }) {
+  const tr = await getTr();
   const sorted = [...rows].sort((a, b) => a.date.getTime() - b.date.getTime());
   const withBalance = sorted.reduce<Array<StatementRow & { balance: number }>>((list, row) => {
     const previous = list.length ? list[list.length - 1].balance : 0;
@@ -45,7 +47,7 @@ export function Statement({
           </div>
           <div className="sm:text-right">
             <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">{title}</p>
-            <p className="text-sm text-zinc-600">As of {formatDate(new Date())}</p>
+            <p className="text-sm text-zinc-600">{tr("As of")}{" "}{formatDate(new Date())}</p>
           </div>
         </header>
 
@@ -65,17 +67,17 @@ export function Statement({
         </div>
 
         {withBalance.length === 0 ? (
-          <p className="py-10 text-center text-sm text-zinc-500">No transactions yet.</p>
+          <p className="py-10 text-center text-sm text-zinc-500">{tr("No transactions yet.")}</p>
         ) : (
           <ResponsiveTable>
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Date</th>
-                  <th>Details</th>
-                  <th className="num">Charge</th>
-                  <th className="num">Payment</th>
-                  <th className="num">Balance</th>
+                  <th>{tr("Date")}</th>
+                  <th>{tr("Details")}</th>
+                  <th className="num">{tr("Charge")}</th>
+                  <th className="num">{tr("Payment")}</th>
+                  <th className="num">{tr("Balance")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -94,9 +96,7 @@ export function Statement({
               </tbody>
               <tfoot>
                 <tr className="border-t-2 border-zinc-300 font-bold">
-                  <td colSpan={2} className="px-3.5 py-3">
-                    Total
-                  </td>
+                  <td colSpan={2} className="px-3.5 py-3">{tr("Total")}</td>
                   <td className="num px-3.5 py-3">{formatMoney(charges)}</td>
                   <td className="num px-3.5 py-3">{formatMoney(paid)}</td>
                   <td className="num px-3.5 py-3">{formatMoney(balance)}</td>

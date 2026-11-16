@@ -11,8 +11,10 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { TableSearch } from "@/components/ui/table-search";
 import { SupplierForm } from "./supplier-form";
+import { getTr } from "@/lib/i18n-server";
 
 export default async function SuppliersPage() {
+  const tr = await getTr();
   const { user, branchId } = await getSessionContext();
   const canAdd = user ? can(user.role, "suppliers:create") : false;
   const canPay = user ? can(user.role, "payments:create") : false;
@@ -29,25 +31,25 @@ export default async function SuppliersPage() {
 
   return (
     <div>
-      <PageHeader title="Suppliers" description="Who you buy stock from, and what you owe them." actions={canAdd ? <SupplierForm /> : null} />
+      <PageHeader title={tr("Suppliers")} description={tr("Who you buy stock from, and what you owe them.")} actions={canAdd ? <SupplierForm /> : null} />
 
       {items.length === 0 ? (
         <TableCard>
-          <EmptyState icon={Building2} title="No suppliers yet" description="Add a supplier, then record purchases from them to bring stock in." action={canAdd ? <SupplierForm /> : null} />
+          <EmptyState icon={Building2} title={tr("No suppliers yet")} description={tr("Add a supplier, then record purchases from them to bring stock in.")} action={canAdd ? <SupplierForm /> : null} />
         </TableCard>
       ) : (
-        <TableSearch placeholder="Search name, company or phone">
+        <TableSearch placeholder={tr("Search name, company or phone")}>
           <TableCard>
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Supplier</th>
-                  <th>Phone</th>
-                  <th>Terms</th>
-                  <th className="num">Purchases</th>
-                  <th className="num">Total bought</th>
-                  <th className="num">You owe</th>
-                  <th className="num">Actions</th>
+                  <th>{tr("Supplier")}</th>
+                  <th>{tr("Phone")}</th>
+                  <th>{tr("Terms")}</th>
+                  <th className="num">{tr("Purchases")}</th>
+                  <th className="num">{tr("Total bought")}</th>
+                  <th className="num">{tr("You owe")}</th>
+                  <th className="num">{tr("Actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -73,9 +75,7 @@ export default async function SuppliersPage() {
                       <td>
                         <div className="flex justify-end gap-1.5">
                           {owed > 0 && canPay ? <PaySupplier supplierId={s.id} name={s.name} owed={owed} accounts={accounts} /> : null}
-                          <Link href={`/suppliers/${s.id}`} className={buttonClass("secondary", "sm")}>
-                            Statement
-                          </Link>
+                          <Link href={`/suppliers/${s.id}`} className={buttonClass("secondary", "sm")}>{tr("Statement")}</Link>
                         </div>
                       </td>
                     </tr>

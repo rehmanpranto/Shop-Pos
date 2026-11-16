@@ -4,22 +4,22 @@ import { Plus } from "lucide-react";
 import { sendJson } from "@/lib/client-api";
 import { Field, Input, Select } from "@/components/ui/field";
 import { FormModal, number, optionalText, text } from "@/components/ui/form-modal";
+import { useTr } from "@/components/layout/language";
 
 type Option = { id: string; name: string };
 
 export function ExpenseForm({ categories, accounts, today }: { categories: Option[]; accounts: Option[]; today: string }) {
+  const tr = useTr();
   return (
     <FormModal
       trigger={
         <>
-          <Plus className="h-4 w-4" />
-          Record expense
-        </>
+          <Plus className="h-4 w-4" />{tr("Record expense")}</>
       }
-      title="Record expense"
-      description="The amount is taken out of the account you choose."
-      submitLabel="Record expense"
-      successMessage="Expense recorded"
+      title={tr("Record expense")}
+      description={tr("The amount is taken out of the account you choose.")}
+      submitLabel={tr("Record expense")}
+      successMessage={tr("Expense recorded")}
       onSubmit={(form) =>
         sendJson("/api/expenses", {
           categoryId: text(form, "categoryId"),
@@ -32,11 +32,9 @@ export function ExpenseForm({ categories, accounts, today }: { categories: Optio
       }
     >
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Category">
+        <Field label={tr("Category")}>
           <Select name="categoryId" required defaultValue="">
-            <option value="" disabled>
-              Choose a category
-            </option>
+            <option value="" disabled>{tr("Choose a category")}</option>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -44,10 +42,10 @@ export function ExpenseForm({ categories, accounts, today }: { categories: Optio
             ))}
           </Select>
         </Field>
-        <Field label="Amount (৳)">
+        <Field label={tr("Amount (৳)")}>
           <Input name="amount" type="number" min="0.01" step="0.01" required />
         </Field>
-        <Field label="Paid from">
+        <Field label={tr("Paid from")}>
           <Select name="accountId" required>
             {accounts.map((a) => (
               <option key={a.id} value={a.id}>
@@ -56,13 +54,13 @@ export function ExpenseForm({ categories, accounts, today }: { categories: Optio
             ))}
           </Select>
         </Field>
-        <Field label="Date">
+        <Field label={tr("Date")}>
           <Input name="date" type="date" required defaultValue={today} max={today} />
         </Field>
-        <Field label="Paid to (optional)">
-          <Input name="vendor" maxLength={160} placeholder="e.g. DESCO" />
+        <Field label={tr("Paid to (optional)")}>
+          <Input name="vendor" maxLength={160} placeholder={tr("e.g. DESCO")} />
         </Field>
-        <Field label="Note (optional)">
+        <Field label={tr("Note (optional)")}>
           <Input name="description" maxLength={500} />
         </Field>
       </div>

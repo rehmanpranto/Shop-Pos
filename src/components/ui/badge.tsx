@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { humanize } from "@/lib/format";
+import { getTr } from "@/lib/i18n-server";
 
 const tones = {
   neutral: "bg-zinc-100 text-zinc-700",
@@ -47,6 +48,7 @@ const STATUS_TONES: Record<string, Tone> = {
   EXPIRED: "red",
 };
 
-export function StatusBadge({ status }: { status: string }) {
-  return <Badge tone={STATUS_TONES[status] ?? "neutral"}>{humanize(status)}</Badge>;
+export async function StatusBadge({ status }: { status: string }) {
+  const tr = await getTr();
+  return <Badge tone={STATUS_TONES[status] ?? "neutral"}>{tr(humanize(status))}</Badge>;
 }

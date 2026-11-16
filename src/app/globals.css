@@ -22,14 +22,14 @@
   --color-brand-soft: var(--brand-soft);
   --color-brand-accent: var(--brand-accent);
   --color-sidebar: var(--sidebar);
-  --font-sans: var(--font-montserrat);
+  --font-sans: var(--font-montserrat), var(--font-bangla);
   --font-mono: var(--font-geist-mono);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-montserrat), "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: var(--font-montserrat), var(--font-bangla), "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
 * {

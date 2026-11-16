@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { sendJson } from "@/lib/client-api";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { useTr } from "@/components/layout/language";
 
 const NEXT: Record<string, { status: string; label: string } | undefined> = {
   PENDING: { status: "PREPARING", label: "Start preparing" },
@@ -13,6 +14,7 @@ const NEXT: Record<string, { status: string; label: string } | undefined> = {
 };
 
 export function DeliveryActions({ deliveryId, status }: { deliveryId: string; status: string }) {
+  const tr = useTr();
   const router = useRouter();
   const toast = useToast();
   const [busy, setBusy] = useState(false);
@@ -30,12 +32,10 @@ export function DeliveryActions({ deliveryId, status }: { deliveryId: string; st
 
   return (
     <>
-      <Button size="sm" disabled={busy} onClick={() => setStatus(next.status, "Delivery updated")}>
-        {next.label}
+      <Button size="sm" disabled={busy} onClick={() => setStatus(next.status, tr("Delivery updated"))}>
+        {tr(next.label)}
       </Button>
-      <Button size="sm" variant="ghost" disabled={busy} className="text-red-700 hover:bg-red-50 hover:text-red-800" onClick={() => setStatus("CANCELLED", "Delivery cancelled")}>
-        Cancel
-      </Button>
+      <Button size="sm" variant="ghost" disabled={busy} className="text-red-700 hover:bg-red-50 hover:text-red-800" onClick={() => setStatus("CANCELLED", tr("Delivery cancelled"))}>{tr("Cancel")}</Button>
     </>
   );
 }

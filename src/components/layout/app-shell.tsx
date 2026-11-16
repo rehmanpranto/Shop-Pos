@@ -1,7 +1,6 @@
 "use client";
 
 import { ReactNode, useCallback, useEffect, useState } from "react";
-import type { Language } from "@/lib/i18n";
 import { ToastProvider } from "@/components/ui/toast";
 import { AppProvider, type CurrentUser } from "./app-context";
 import { CommandPalette } from "./command-palette";
@@ -10,14 +9,12 @@ import { Topbar, type BranchOption } from "./topbar";
 
 export function AppShell({
   user,
-  language,
   businessName,
   branches,
   activeBranchId,
   children,
 }: {
   user: CurrentUser;
-  language: Language;
   businessName: string;
   branches: BranchOption[];
   activeBranchId: string | null;
@@ -41,7 +38,7 @@ export function AppShell({
   }, []);
 
   return (
-    <AppProvider user={user} initialLanguage={language}>
+    <AppProvider user={user}>
       <ToastProvider>
         <div className="flex min-h-screen bg-background print:block print:bg-white">
           <div className="print:hidden">

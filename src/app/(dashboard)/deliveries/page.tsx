@@ -11,8 +11,10 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { TableSearch } from "@/components/ui/table-search";
 import { DeliveryActions } from "./delivery-actions";
+import { getTr } from "@/lib/i18n-server";
 
 export default async function DeliveriesPage() {
+  const tr = await getTr();
   const { user, branchId } = await getSessionContext();
   const items = branchId
     ? await prisma.delivery.findMany({
@@ -24,39 +26,37 @@ export default async function DeliveriesPage() {
     : [];
   const canUpdate = user ? can(user.role, "deliveries:update") : false;
   const goToSales = (
-    <Link href="/sales" className={buttonClass("secondary")}>
-      Schedule from Sales
-    </Link>
+    <Link href="/sales" className={buttonClass("secondary")}>{tr("Schedule from Sales")}</Link>
   );
 
   return (
     <div>
-      <PageHeader title="Deliveries" description="Orders going out to customers. To schedule one, open Sales and choose Deliver on the invoice." actions={goToSales} />
+      <PageHeader title={tr("Deliveries")} description={tr("Orders going out to customers. To schedule one, open Sales and choose Deliver on the invoice.")} actions={goToSales} />
 
       {items.length === 0 ? (
         <TableCard>
-          <EmptyState icon={Truck} title="No deliveries yet" description="When a customer wants goods delivered, schedule it from the invoice on the Sales page." action={goToSales} />
+          <EmptyState icon={Truck} title={tr("No deliveries yet")} description={tr("When a customer wants goods delivered, schedule it from the invoice on the Sales page.")} action={goToSales} />
         </TableCard>
       ) : (
         <TableSearch
-          placeholder="Search delivery, invoice, customer or driver"
+          placeholder={tr("Search delivery, invoice, customer or driver")}
           filters={[
-            { label: "To do", value: "open" },
-            { label: "Delivered", value: "DELIVERED" },
-            { label: "Cancelled", value: "CANCELLED" },
+            { label: tr("To do"), value: "open" },
+            { label: tr("Delivered"), value: "DELIVERED" },
+            { label: tr("Cancelled"), value: "CANCELLED" },
           ]}
         >
           <TableCard>
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Delivery</th>
-                  <th>Customer</th>
-                  <th>Address</th>
-                  <th>Driver</th>
-                  <th>Date</th>
-                  <th>Status</th>
-                  <th className="num">Actions</th>
+                  <th>{tr("Delivery")}</th>
+                  <th>{tr("Customer")}</th>
+                  <th>{tr("Address")}</th>
+                  <th>{tr("Driver")}</th>
+                  <th>{tr("Date")}</th>
+                  <th>{tr("Status")}</th>
+                  <th className="num">{tr("Actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -70,7 +70,7 @@ export default async function DeliveriesPage() {
                         </Link>
                         <p className="text-xs text-zinc-500">{d.sale.invoiceNo}</p>
                       </td>
-                      <td>{d.customer?.name ?? "Walk-in"}</td>
+                      <td>{d.customer?.name ?? tr("Walk-in")}</td>
                       <td className="max-w-56 text-zinc-600">
                         {d.address ?? "-"}
                         {d.phone ? <span className="block text-xs text-zinc-500">{d.phone}</span> : null}
@@ -86,9 +86,7 @@ export default async function DeliveriesPage() {
                       <td>
                         <div className="flex justify-end gap-1.5">
                           {canUpdate ? <DeliveryActions deliveryId={d.id} status={d.status} /> : null}
-                          <Link href={`/deliveries/${d.id}`} className={buttonClass("secondary", "sm")}>
-                            Challan
-                          </Link>
+                          <Link href={`/deliveries/${d.id}`} className={buttonClass("secondary", "sm")}>{tr("Challan")}</Link>
                         </div>
                       </td>
                     </tr>

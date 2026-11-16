@@ -5,8 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { TableCard } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { BranchForm } from "./branch-form";
+import { getTr } from "@/lib/i18n-server";
 
 export default async function BranchesPage() {
+  const tr = await getTr();
   const { branchId } = await getSessionContext();
   const branches = await prisma.branch.findMany({
     orderBy: [{ isDefault: "desc" }, { name: "asc" }],
@@ -16,8 +18,8 @@ export default async function BranchesPage() {
   return (
     <div>
       <PageHeader
-        title="Branches"
-        description="Each branch keeps its own stock, customers and money. Switch the branch you are working in from your account menu, and move stock between branches from the Products page."
+        title={tr("Branches")}
+        description={tr("Each branch keeps its own stock, customers and money. Switch the branch you are working in from your account menu, and move stock between branches from the Products page.")}
         actions={<BranchForm />}
       />
 
@@ -25,13 +27,13 @@ export default async function BranchesPage() {
         <table className="data-table">
           <thead>
             <tr>
-              <th>Branch</th>
-              <th>Address</th>
-              <th className="num">Staff</th>
-              <th className="num">Products</th>
-              <th className="num">Stock value</th>
-              <th className="num">Sales</th>
-              <th>Status</th>
+              <th>{tr("Branch")}</th>
+              <th>{tr("Address")}</th>
+              <th className="num">{tr("Staff")}</th>
+              <th className="num">{tr("Products")}</th>
+              <th className="num">{tr("Stock value")}</th>
+              <th className="num">{tr("Sales")}</th>
+              <th>{tr("Status")}</th>
             </tr>
           </thead>
           <tbody>
@@ -48,9 +50,9 @@ export default async function BranchesPage() {
                 <td className="num">{branch._count.sales}</td>
                 <td>
                   <div className="flex flex-wrap gap-1">
-                    {branch.id === branchId ? <Badge tone="blue">Working here</Badge> : null}
-                    {branch.isDefault ? <Badge>Main</Badge> : null}
-                    {!branch.isActive ? <Badge tone="red">Closed</Badge> : null}
+                    {branch.id === branchId ? <Badge tone="blue">{tr("Working here")}</Badge> : null}
+                    {branch.isDefault ? <Badge>{tr("Main")}</Badge> : null}
+                    {!branch.isActive ? <Badge tone="red">{tr("Closed")}</Badge> : null}
                   </div>
                 </td>
               </tr>

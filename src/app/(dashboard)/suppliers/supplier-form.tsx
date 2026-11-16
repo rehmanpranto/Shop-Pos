@@ -4,19 +4,19 @@ import { Plus } from "lucide-react";
 import { sendJson } from "@/lib/client-api";
 import { Field, Input } from "@/components/ui/field";
 import { FormModal, optionalText, text } from "@/components/ui/form-modal";
+import { useTr } from "@/components/layout/language";
 
 export function SupplierForm() {
+  const tr = useTr();
   return (
     <FormModal
       trigger={
         <>
-          <Plus className="h-4 w-4" />
-          Add supplier
-        </>
+          <Plus className="h-4 w-4" />{tr("Add supplier")}</>
       }
-      title="Add supplier"
-      submitLabel="Add supplier"
-      successMessage="Supplier added"
+      title={tr("Add supplier")}
+      submitLabel={tr("Add supplier")}
+      successMessage={tr("Supplier added")}
       onSubmit={(form) =>
         sendJson("/api/suppliers", {
           supplierCode: text(form, "supplierCode") || `S-${Date.now().toString(36).toUpperCase()}`,
@@ -30,25 +30,25 @@ export function SupplierForm() {
       }
     >
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Contact name">
+        <Field label={tr("Contact name")}>
           <Input name="name" required />
         </Field>
-        <Field label="Company (optional)">
+        <Field label={tr("Company (optional)")}>
           <Input name="company" />
         </Field>
-        <Field label="Phone">
+        <Field label={tr("Phone")}>
           <Input name="phone" type="tel" />
         </Field>
-        <Field label="Email (optional)">
+        <Field label={tr("Email (optional)")}>
           <Input name="email" type="email" />
         </Field>
-        <Field label="Address (optional)" className="sm:col-span-2">
+        <Field label={tr("Address (optional)")} className="sm:col-span-2">
           <Input name="address" />
         </Field>
-        <Field label="Payment terms (optional)">
-          <Input name="paymentTerms" placeholder="e.g. 30 days" />
+        <Field label={tr("Payment terms (optional)")}>
+          <Input name="paymentTerms" placeholder={tr("e.g. 30 days")} />
         </Field>
-        <Field label="Supplier code (optional)" hint="Leave blank to create one automatically.">
+        <Field label={tr("Supplier code (optional)")} hint={tr("Leave blank to create one automatically.")}>
           <Input name="supplierCode" />
         </Field>
       </div>

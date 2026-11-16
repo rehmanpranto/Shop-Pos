@@ -3,6 +3,7 @@
 import { ReactNode, useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTr } from "@/components/layout/language";
 
 export function Modal({
   open,
@@ -19,6 +20,7 @@ export function Modal({
   size?: "sm" | "md" | "lg";
   children: ReactNode;
 }) {
+  const tr = useTr();
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -40,7 +42,7 @@ export function Modal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label={title}>
-      <button type="button" aria-label="Close" tabIndex={-1} onClick={onClose} className="absolute inset-0 cursor-default bg-zinc-900/50" />
+      <button type="button" aria-label={tr("Close")} tabIndex={-1} onClick={onClose} className="absolute inset-0 cursor-default bg-zinc-900/50" />
       <div
         ref={panelRef}
         className={cn(
@@ -55,7 +57,7 @@ export function Modal({
             <h3 className="text-lg font-bold text-zinc-900">{title}</h3>
             {description ? <p className="mt-0.5 text-sm text-zinc-500">{description}</p> : null}
           </div>
-          <button type="button" onClick={onClose} aria-label="Close" className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900">
+          <button type="button" onClick={onClose} aria-label={tr("Close")} className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900">
             <X className="h-5 w-5" />
           </button>
         </div>

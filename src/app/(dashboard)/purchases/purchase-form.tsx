@@ -6,6 +6,7 @@ import { sendJson } from "@/lib/client-api";
 import { formatMoney } from "@/lib/format";
 import { Field, Input, Select, inputClass } from "@/components/ui/field";
 import { FormModal, number, optionalText, text } from "@/components/ui/form-modal";
+import { useTr } from "@/components/layout/language";
 
 type Option = { id: string; name: string };
 export type PurchaseProduct = {
@@ -36,6 +37,7 @@ export function PurchaseForm({
   trigger?: ReactNode;
   secondary?: boolean;
 }) {
+  const tr = useTr();
   const startingLines = (): Line[] => {
     const preset = (defaults?.lines ?? []).flatMap((line, index) => {
       const product = products.find((p) => p.id === line.productId);
@@ -51,14 +53,14 @@ export function PurchaseForm({
 
   async function submit(form: FormData) {
     const filled = lines.filter((line) => line.productId);
-    if (filled.length === 0) return "Add at least one product.";
-    if (filled.some((line) => !(Number(line.qty) > 0) || !(Number(line.unitCost) > 0))) return "Every line needs a quantity and a cost above zero.";
-    if (new Set(filled.map((line) => line.productId)).size !== filled.length) return "The same product is listed twice. Combine it into one line.";
+    if (filled.length === 0) return tr("Add at least one product.");
+    if (filled.some((line) => !(Number(line.qty) > 0) || !(Number(line.unitCost) > 0))) return tr("Every line needs a quantity and a cost above zero.");
+    if (new Set(filled.map((line) => line.productId)).size !== filled.length) return tr("The same product is listed twice. Combine it into one line.");
 
     const paid = number(form, "paid");
-    if (paid > total) return "Paid amount is more than the purchase total.";
+    if (paid > total) return tr("Paid amount is more than the purchase total.");
     const account = accounts.find((a) => a.id === text(form, "accountId"));
-    if (paid > 0 && !account) return "Choose the account you paid from.";
+    if (paid > 0 && !account) return tr("Choose the account you paid from.");
 
     const result = await sendJson("/api/purchases", {
       supplierId: text(form, "supplierId"),
@@ -80,25 +82,21 @@ export function PurchaseForm({
       trigger={
         trigger ?? (
           <>
-            <Plus className="h-4 w-4" />
-            New purchase
-          </>
+            <Plus className="h-4 w-4" />{tr("New purchase")}</>
         )
       }
       triggerLook={secondary ? { variant: "secondary" } : undefined}
-      title="New purchase"
-      description="Record stock bought from a supplier. Received items are added to stock and update the average cost."
-      submitLabel="Save purchase"
-      successMessage="Purchase saved"
+      title={tr("New purchase")}
+      description={tr("Record stock bought from a supplier. Received items are added to stock and update the average cost.")}
+      submitLabel={tr("Save purchase")}
+      successMessage={tr("Purchase saved")}
       size="lg"
       onSubmit={submit}
     >
       <div className="grid gap-4 sm:grid-cols-3">
-        <Field label="Supplier">
+        <Field label={tr("Supplier")}>
           <Select name="supplierId" required defaultValue={defaults?.supplierId ?? ""}>
-            <option value="" disabled>
-              Choose a supplier
-            </option>
+            <option value="" disabled>{tr("Choose a supplier")}</option>
             {suppliers.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
@@ -106,25 +104,25 @@ export function PurchaseForm({
             ))}
           </Select>
         </Field>
-        <Field label="Supplier's invoice no. (optional)">
+        <Field label={tr("Supplier's invoice no. (optional)")}>
           <Input name="supplierInvoiceNo" />
         </Field>
-        <Field label="Stock">
+        <Field label={tr("Stock")}>
           <Select name="status" defaultValue={defaults?.status ?? "RECEIVED"}>
-            <option value="RECEIVED">Received, add to stock now</option>
-            <option value="ORDERED">Ordered, not received yet</option>
+            <option value="RECEIVED">{tr("Received, add to stock now")}</option>
+            <option value="ORDERED">{tr("Ordered, not received yet")}</option>
           </Select>
         </Field>
       </div>
 
-      <p className="mb-2 mt-5 text-xs font-bold uppercase tracking-wide text-zinc-500">Items</p>
+      <p className="mb-2 mt-5 text-xs font-bold uppercase tracking-wide text-zinc-500">{tr("Items")}</p>
       <div className="space-y-2">
         {lines.map((line) => {
           const product = products.find((p) => p.id === line.productId);
           return (
             <div key={line.key} className="grid grid-cols-2 items-end gap-2 rounded-xl border border-zinc-200 p-2 sm:grid-cols-[minmax(0,1fr)_90px_90px_120px_110px_auto] sm:border-0 sm:p-0">
               <select
-                aria-label="Product"
+                aria-label={tr("Product")}
                 value={line.productId}
                 onChange={(event) => {
                   const picked = products.find((p) => p.id === event.target.value);
@@ -132,16 +130,16 @@ export function PurchaseForm({
                 }}
                 className={`${inputClass} col-span-2 sm:col-span-1`}
               >
-                <option value="">Choose a product</option>
+                <option value="">{tr("Choose a product")}</option>
                 {products.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.name} ({p.sku})
                   </option>
                 ))}
               </select>
-              <input type="number" min="0" step="any" placeholder="Qty" aria-label="Quantity" value={line.qty} onChange={(event) => update(line.key, { qty: event.target.value })} className={`${inputClass} tabular text-right`} />
+              <input type="number" min="0" step="any" placeholder={tr("Qty")} aria-label={tr("Quantity")} value={line.qty} onChange={(event) => update(line.key, { qty: event.target.value })} className={`${inputClass} tabular text-right`} />
               <select
-                aria-label="Unit"
+                aria-label={tr("Unit")}
                 value={line.unitId}
                 disabled={!product}
                 onChange={(event) => {
@@ -160,8 +158,8 @@ export function PurchaseForm({
                 type="number"
                 min="0"
                 step="any"
-                placeholder="Cost each"
-                aria-label="Cost each"
+                placeholder={tr("Cost each")}
+                aria-label={tr("Cost each")}
                 value={line.unitCost}
                 onChange={(event) => update(line.key, { unitCost: event.target.value })}
                 className={`${inputClass} tabular text-right`}
@@ -169,7 +167,7 @@ export function PurchaseForm({
               <p className="tabular flex h-10 items-center justify-end text-sm font-semibold text-zinc-900">{formatMoney((Number(line.qty) || 0) * (Number(line.unitCost) || 0))}</p>
               <button
                 type="button"
-                aria-label="Remove line"
+                aria-label={tr("Remove line")}
                 disabled={lines.length === 1}
                 onClick={() => setLines((old) => old.filter((l) => l.key !== line.key))}
                 className="flex h-10 w-10 items-center justify-center justify-self-end rounded-lg text-zinc-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-30"
@@ -188,20 +186,18 @@ export function PurchaseForm({
         }}
         className="mt-2 inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-semibold text-brand hover:bg-brand-soft"
       >
-        <Plus className="h-4 w-4" />
-        Add another item
-      </button>
+        <Plus className="h-4 w-4" />{tr("Add another item")}</button>
 
       <div className="mt-4 flex items-baseline justify-between rounded-xl bg-zinc-50 px-4 py-3">
-        <span className="text-sm font-semibold text-zinc-700">Purchase total</span>
+        <span className="text-sm font-semibold text-zinc-700">{tr("Purchase total")}</span>
         <span className="tabular text-xl font-black text-zinc-900">{formatMoney(total)}</span>
       </div>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-3">
-        <Field label="Paid now (৳)" hint="Leave 0 to owe the full amount.">
+        <Field label={tr("Paid now (৳)")} hint={tr("Leave 0 to owe the full amount.")}>
           <Input name="paid" type="number" min="0" step="0.01" defaultValue="0" />
         </Field>
-        <Field label="Paid from">
+        <Field label={tr("Paid from")}>
           <Select name="accountId" defaultValue={accounts[0]?.id}>
             {accounts.map((a) => (
               <option key={a.id} value={a.id}>
@@ -210,7 +206,7 @@ export function PurchaseForm({
             ))}
           </Select>
         </Field>
-        <Field label="Note (optional)">
+        <Field label={tr("Note (optional)")}>
           <Input name="notes" maxLength={300} />
         </Field>
       </div>

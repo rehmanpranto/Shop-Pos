@@ -6,15 +6,17 @@ import { Store, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useApp } from "./app-context";
 import { navForRole } from "./nav";
+import { useTr } from "@/components/layout/language";
 
 export function Sidebar({ businessName, branchName, open, onClose }: { businessName: string; branchName: string | null; open: boolean; onClose: () => void }) {
+  const tr = useTr();
   const pathname = usePathname();
   const { user, t } = useApp();
   const groups = navForRole(user.role);
 
   return (
     <>
-      {open ? <button type="button" aria-label="Close menu" onClick={onClose} className="fixed inset-0 z-30 bg-zinc-900/50 md:hidden" /> : null}
+      {open ? <button type="button" aria-label={tr("Close menu")} onClick={onClose} className="fixed inset-0 z-30 bg-zinc-900/50 md:hidden" /> : null}
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-40 flex w-64 shrink-0 flex-col bg-sidebar text-slate-300 transition-transform duration-200 md:sticky md:top-0 md:h-screen md:translate-x-0",
@@ -29,12 +31,12 @@ export function Sidebar({ businessName, branchName, open, onClose }: { businessN
             <p className="line-clamp-2 text-sm font-bold leading-tight text-white">{businessName}</p>
             {branchName ? <p className="truncate text-xs text-slate-400">{branchName}</p> : null}
           </div>
-          <button type="button" onClick={onClose} aria-label="Close menu" className="rounded-lg p-1.5 text-slate-400 hover:bg-white/10 hover:text-white md:hidden">
+          <button type="button" onClick={onClose} aria-label={tr("Close menu")} className="rounded-lg p-1.5 text-slate-400 hover:bg-white/10 hover:text-white md:hidden">
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <nav className="flex-1 space-y-4 overflow-y-auto px-3 pb-4" aria-label="Main">
+        <nav className="flex-1 space-y-4 overflow-y-auto px-3 pb-4" aria-label={tr("Main")}>
           {groups.map((group) => (
             <div key={group.label}>
               <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">{t(group.key)}</p>

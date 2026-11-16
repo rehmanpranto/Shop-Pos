@@ -15,8 +15,10 @@ import { TableSearch } from "@/components/ui/table-search";
 import { loadPurchaseFormData } from "./data";
 import { PurchaseForm } from "./purchase-form";
 import { ReceiveForm } from "./receive-form";
+import { getTr } from "@/lib/i18n-server";
 
 export default async function PurchasesPage() {
+  const tr = await getTr();
   const { user, branchId } = await getSessionContext();
   if (!branchId) return null;
 
@@ -45,55 +47,53 @@ export default async function PurchasesPage() {
   return (
     <div>
       <PageHeader
-        title="Purchases"
-        description="Stock you buy from suppliers."
+        title={tr("Purchases")}
+        description={tr("Stock you buy from suppliers.")}
         actions={
           <>
             <Link href="/purchases/reorder" className={buttonClass("secondary")}>
-              <ListChecks className="h-4 w-4" />
-              Reorder list
-            </Link>
+              <ListChecks className="h-4 w-4" />{tr("Reorder list")}</Link>
             {form}
           </>
         }
       />
 
       <div className="mb-4 grid grid-cols-2 gap-3 xl:grid-cols-4">
-        <StatCard label="Bought this month" value={formatMoney(monthTotal)} icon={ShoppingCart} />
-        <StatCard label="You owe suppliers" value={formatMoney(owed)} icon={HandCoins} tone="amber" />
-        <StatCard label="Waiting to arrive" value={`${waiting}`} hint="Ordered but not fully received" icon={ListChecks} tone="neutral" />
+        <StatCard label={tr("Bought this month")} value={formatMoney(monthTotal)} icon={ShoppingCart} />
+        <StatCard label={tr("You owe suppliers")} value={formatMoney(owed)} icon={HandCoins} tone="amber" />
+        <StatCard label={tr("Waiting to arrive")} value={`${waiting}`} hint={tr("Ordered but not fully received")} icon={ListChecks} tone="neutral" />
       </div>
 
       {purchases.length === 0 ? (
         <TableCard>
           <EmptyState
             icon={ShoppingCart}
-            title="No purchases yet"
-            description={ready ? "Record a purchase to bring stock in and track what you owe." : "You need at least one supplier and one product before recording a purchase."}
+            title={tr("No purchases yet")}
+            description={ready ? tr("Record a purchase to bring stock in and track what you owe.") : tr("You need at least one supplier and one product before recording a purchase.")}
             action={
               form ??
               (ready ? null : (
                 <Link href={suppliers.length === 0 ? "/suppliers" : "/products"} className={buttonClass()}>
-                  {suppliers.length === 0 ? "Add a supplier" : "Add a product"}
+                  {suppliers.length === 0 ? tr("Add a supplier") : tr("Add a product")}
                 </Link>
               ))
             }
           />
         </TableCard>
       ) : (
-        <TableSearch placeholder="Search PO number or supplier" filters={[{ label: "Unpaid", value: "due" }, { label: "Waiting to arrive", value: "pending" }]}>
+        <TableSearch placeholder={tr("Search PO number or supplier")} filters={[{ label: tr("Unpaid"), value: "due" }, { label: tr("Waiting to arrive"), value: "pending" }]}>
           <TableCard>
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Purchase</th>
-                  <th>Supplier</th>
-                  <th className="num">Items</th>
-                  <th className="num">Total</th>
-                  <th className="num">Paid</th>
-                  <th className="num">Due</th>
-                  <th>Status</th>
-                  <th className="num">Actions</th>
+                  <th>{tr("Purchase")}</th>
+                  <th>{tr("Supplier")}</th>
+                  <th className="num">{tr("Items")}</th>
+                  <th className="num">{tr("Total")}</th>
+                  <th className="num">{tr("Paid")}</th>
+                  <th className="num">{tr("Due")}</th>
+                  <th>{tr("Status")}</th>
+                  <th className="num">{tr("Actions")}</th>
                 </tr>
               </thead>
               <tbody>

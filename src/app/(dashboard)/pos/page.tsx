@@ -10,6 +10,7 @@ import { inputClass } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
 import { useToast } from "@/components/ui/toast";
 import { useApp } from "@/components/layout/app-context";
+import { useTr } from "@/components/layout/language";
 
 type UnitOption = { id: string; code: string; factor: number };
 
@@ -91,6 +92,7 @@ function subscribeHeld(callback: () => void) {
 }
 
 export default function PosPage() {
+  const tr = useTr();
   const toast = useToast();
   const { user, t } = useApp();
   const searchRef = useRef<HTMLInputElement>(null);
@@ -228,25 +230,25 @@ export default function PosPage() {
   const due = round2(Math.max(total - paid, 0));
 
   const problem = (() => {
-    if (lines.length === 0) return "Add a product to start";
+    if (lines.length === 0) return tr("Add a product to start");
     const bad = lines.find((line) => !(line.qty > 0));
-    if (bad) return `Enter a quantity for ${bad.product.name}`;
+    if (bad) return tr("Enter a quantity for {0}", bad.product.name);
     const over = lines.find((line) => line.baseQty > line.product.stockQty + 1e-9);
-    if (over) return `Only ${formatQty(over.product.stockQty)} ${over.product.baseUnit.code} of ${over.product.name} in stock`;
+    if (over) return tr("Only {0} {1} of {2} in stock", formatQty(over.product.stockQty), over.product.baseUnit.code, over.product.name);
     const cheap = lines.find((line) => !(line.unitPrice > 0) || (!canOverridePrice && line.unitPrice < line.minPrice));
-    if (cheap) return cheap.unitPrice > 0 ? `${cheap.product.name} cannot sell below ${formatMoney(cheap.minPrice)}` : `Enter a price for ${cheap.product.name}`;
-    if (total <= 0) return "Total must be more than zero";
-    if (extraPaid > total) return "The split payments add up to more than the total";
-    if (payments.some((row, i) => !row.accountId && (i === 0 || Number(row.amount) > 0))) return "Choose how the customer is paying";
-    if (new Set(payments.map((row) => row.accountId)).size !== payments.length) return "The same payment method is listed twice";
-    if (paid <= 0) return "Enter the amount received";
-    if (due > 0 && !customerId) return "Pick a customer to sell on credit";
+    if (cheap) return cheap.unitPrice > 0 ? tr("{0} cannot sell below {1}", cheap.product.name, formatMoney(cheap.minPrice)) : tr("Enter a price for {0}", cheap.product.name);
+    if (total <= 0) return tr("Total must be more than zero");
+    if (extraPaid > total) return tr("The split payments add up to more than the total");
+    if (payments.some((row, i) => !row.accountId && (i === 0 || Number(row.amount) > 0))) return tr("Choose how the customer is paying");
+    if (new Set(payments.map((row) => row.accountId)).size !== payments.length) return tr("The same payment method is listed twice");
+    if (paid <= 0) return tr("Enter the amount received");
+    if (due > 0 && !customerId) return tr("Pick a customer to sell on credit");
     return "";
   })();
 
   function addToCart(p: Product) {
     if (p.stockQty <= 0) {
-      toast(`${p.name} is out of stock`, "error");
+      toast(tr("{0} is out of stock", p.name), "error");
       return;
     }
     setCart((old) => {
@@ -254,7 +256,7 @@ export default function PosPage() {
       if (existing) {
         const factor = p.units.find((u) => u.id === existing.unitId)?.factor ?? 1;
         if ((existing.qty + 1) * factor > p.stockQty) {
-          toast(`Only ${formatQty(p.stockQty)} ${p.baseUnit.code} of ${p.name} in stock`, "error");
+          toast(tr("Only {0} {1} of {2} in stock", formatQty(p.stockQty), p.baseUnit.code, p.name), "error");
           return old;
         }
         return old.map((line) => (line.productId === p.id ? { ...line, qty: line.qty + 1 } : line));
@@ -324,7 +326,7 @@ export default function PosPage() {
       addToCart(match);
       setQuery("");
     } else {
-      toast(filtered.length === 0 ? "No product matches that code" : "More than one match. Tap the product you want.", "error");
+      toast(filtered.length === 0 ? tr("No product matches that code") : tr("More than one match. Tap the product you want."), "error");
     }
   }
 
@@ -339,7 +341,7 @@ export default function PosPage() {
 
     const result = await sendJson<{ id: string; invoiceNo: string }>("/api/sales", {
       customerId: customerId || undefined,
-      notes: quotation ? `From quotation ${quotation.quotationNo}` : "POS checkout",
+      notes: quotation ? tr("From quotation {0}", quotation.quotationNo) : tr("POS checkout"),
       discountAmount: discountValue,
       taxAmount: 0,
       items: lines.map((line) => ({ productId: line.productId, unitId: line.unit.id, qty: line.qty, unitPrice: line.unitPrice, discountAmount: 0, taxAmount: 0 })),
@@ -405,8 +407,7 @@ export default function PosPage() {
             aria-label={t("pos.search")}
             className="h-12 w-full rounded-xl border border-zinc-300 bg-white pl-11 pr-4 text-base sm:pr-24 placeholder:text-zinc-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
           />
-          <span className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 text-xs text-zinc-400 sm:block">
-            press <kbd className="rounded border border-zinc-200 bg-zinc-50 px-1.5 font-semibold">/</kbd>
+          <span className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 text-xs text-zinc-400 sm:block">{tr("press")}{" "}<kbd className="rounded border border-zinc-200 bg-zinc-50 px-1.5 font-semibold">/</kbd>
           </span>
         </div>
 
@@ -439,9 +440,9 @@ export default function PosPage() {
           ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center px-6 py-14 text-center">
               <PackageSearch className="h-10 w-10 text-zinc-300" />
-              <p className="mt-3 font-semibold text-zinc-900">{products.length === 0 ? "No products yet" : "No product matches"}</p>
+              <p className="mt-3 font-semibold text-zinc-900">{products.length === 0 ? tr("No products yet") : tr("No product matches")}</p>
               <p className="mt-1 text-sm text-zinc-500">
-                {products.length === 0 ? "Add products on the Products page, then come back to sell." : "Try a different name, SKU or category."}
+                {products.length === 0 ? tr("Add products on the Products page, then come back to sell.") : tr("Try a different name, SKU or category.")}
               </p>
             </div>
           ) : (
@@ -515,7 +516,7 @@ export default function PosPage() {
           </div>
         </div>
 
-        {quotation ? <p className="border-b border-sky-100 bg-sky-50 px-4 py-2 text-xs font-semibold text-sky-800">From quotation {quotation.quotationNo}, at the quoted prices</p> : null}
+        {quotation ? <p className="border-b border-sky-100 bg-sky-50 px-4 py-2 text-xs font-semibold text-sky-800">{tr("From quotation")}{" "}{quotation.quotationNo}{tr(", at the quoted prices")}</p> : null}
 
         <div className="max-h-[34vh] overflow-y-auto px-4">
           {lines.length === 0 ? (
@@ -530,7 +531,7 @@ export default function PosPage() {
                   <li key={line.productId} className="py-3">
                     <div className="flex items-start justify-between gap-2">
                       <p className="text-sm font-semibold text-zinc-900">{line.product.name}</p>
-                      <button type="button" onClick={remove} aria-label={`Remove ${line.product.name}`} className="rounded p-1 text-zinc-400 hover:bg-red-50 hover:text-red-600">
+                      <button type="button" onClick={remove} aria-label={tr("Remove {0}", line.product.name)} className="rounded p-1 text-zinc-400 hover:bg-red-50 hover:text-red-600">
                         <X className="h-4 w-4" />
                       </button>
                     </div>
@@ -538,7 +539,7 @@ export default function PosPage() {
                       <div className="flex items-center rounded-lg border border-zinc-300">
                         <button
                           type="button"
-                          aria-label="Decrease quantity"
+                          aria-label={tr("Decrease quantity")}
                           onClick={() => (line.qty <= 1 ? remove() : updateLine(line.productId, { qty: round2(line.qty - 1) }))}
                           className="flex h-11 w-11 items-center justify-center text-zinc-600 hover:bg-zinc-100 sm:h-9 sm:w-9"
                         >
@@ -551,12 +552,12 @@ export default function PosPage() {
                           step="any"
                           value={Number.isFinite(line.qty) ? line.qty : ""}
                           onChange={(e) => updateLine(line.productId, { qty: e.target.value === "" ? NaN : Number(e.target.value) })}
-                          aria-label={`Quantity of ${line.product.name}`}
+                          aria-label={tr("Quantity of {0}", line.product.name)}
                           className="tabular h-11 w-14 border-x border-zinc-300 text-center text-sm font-semibold focus:outline-none sm:h-9"
                         />
                         <button
                           type="button"
-                          aria-label="Increase quantity"
+                          aria-label={tr("Increase quantity")}
                           disabled={((line.qty || 0) + 1) * line.unit.factor > line.product.stockQty}
                           onClick={() => updateLine(line.productId, { qty: round2((line.qty || 0) + 1) })}
                           className="flex h-11 w-11 items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-30 sm:h-9 sm:w-9"
@@ -566,7 +567,7 @@ export default function PosPage() {
                       </div>
                       {line.product.units.length > 1 ? (
                         <select
-                          aria-label={`Unit for ${line.product.name}`}
+                          aria-label={tr("Unit for {0}", line.product.name)}
                           value={line.unit.id}
                           onChange={(e) => changeUnit(line.product, e.target.value)}
                           className="h-11 rounded-lg border border-zinc-300 bg-white px-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand/20 sm:h-9"
@@ -588,18 +589,16 @@ export default function PosPage() {
                         step="any"
                         value={Number.isFinite(line.unitPrice) ? line.unitPrice : ""}
                         onChange={(e) => updateLine(line.productId, { unitPrice: e.target.value === "" ? NaN : Number(e.target.value), priceEdited: true })}
-                        aria-label={`Unit price of ${line.product.name}`}
+                        aria-label={tr("Unit price of {0}", line.product.name)}
                         className={cn("tabular h-11 w-24 rounded-lg border px-2 text-right text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 sm:h-9", belowMin ? "border-red-400 text-red-700" : "border-zinc-300")}
                       />
                       <span className="tabular ml-auto text-sm font-bold text-zinc-900">{formatMoney(line.total || 0)}</span>
                     </div>
                     {overStock ? (
-                      <p className="mt-1 text-xs font-medium text-red-600">
-                        Only {formatQty(line.product.stockQty)} {line.product.baseUnit.code} in stock
-                      </p>
+                      <p className="mt-1 text-xs font-medium text-red-600">{tr("Only")}{" "}{formatQty(line.product.stockQty)} {line.product.baseUnit.code}{" "}{tr("in stock")}</p>
                     ) : belowMin ? (
                       <p className={cn("mt-1 text-xs font-medium", canOverridePrice ? "text-amber-700" : "text-red-600")}>
-                        {canOverridePrice ? `Below the minimum price of ${formatMoney(line.minPrice)}. Allowed for your role.` : `Minimum price is ${formatMoney(line.minPrice)}`}
+                        {canOverridePrice ? tr("Below the minimum price of {0}. Allowed for your role.", formatMoney(line.minPrice)) : tr("Minimum price is {0}", formatMoney(line.minPrice))}
                       </p>
                     ) : null}
                   </li>
@@ -618,7 +617,7 @@ export default function PosPage() {
                 {customers.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
-                    {c.priceLevel === "WHOLESALE" ? " (wholesale)" : ""}
+                    {c.priceLevel === "WHOLESALE" ? tr(" (wholesale)") : ""}
                   </option>
                 ))}
               </select>
@@ -635,12 +634,12 @@ export default function PosPage() {
               {payments.map((row, index) => (
                 <div key={row.key} className="flex items-center gap-2">
                   <select
-                    aria-label="Payment method"
+                    aria-label={tr("Payment method")}
                     value={row.accountId}
                     onChange={(e) => setPayments((old) => old.map((r) => (r.key === row.key ? { ...r, accountId: e.target.value } : r)))}
                     className={cn(inputClass, "min-w-0 flex-1")}
                   >
-                    {index > 0 ? <option value="">Choose…</option> : null}
+                    {index > 0 ? <option value="">{tr("Choose…")}</option> : null}
                     {accounts.map((a) => (
                       <option key={a.id} value={a.id}>
                         {a.name}
@@ -654,14 +653,14 @@ export default function PosPage() {
                     step="any"
                     value={row.amount}
                     onChange={(e) => setPayments((old) => old.map((r) => (r.key === row.key ? { ...r, amount: e.target.value } : r)))}
-                    placeholder={index === 0 ? (needed > 0 ? `${needed.toFixed(2)} (full)` : "0.00") : "0.00"}
-                    aria-label={index === 0 ? "Amount received" : "Amount paid this way"}
+                    placeholder={index === 0 ? (needed > 0 ? tr("{0} (full)", needed.toFixed(2)) : "0.00") : "0.00"}
+                    aria-label={index === 0 ? tr("Amount received") : tr("Amount paid this way")}
                     className={cn(inputClass, "tabular w-36 text-right")}
                   />
                   {index > 0 ? (
                     <button
                       type="button"
-                      aria-label="Remove payment"
+                      aria-label={tr("Remove payment")}
                       onClick={() => setPayments((old) => old.filter((r) => r.key !== row.key))}
                       className="flex h-10 w-9 shrink-0 items-center justify-center rounded-lg text-zinc-400 hover:bg-red-50 hover:text-red-600"
                     >
@@ -758,7 +757,7 @@ export default function PosPage() {
         {completed ? (
           <div className="text-center">
             <CheckCircle2 className="mx-auto h-14 w-14 text-emerald-600" />
-            <p className="mt-2 text-sm text-zinc-500">Invoice {completed.invoiceNo}</p>
+            <p className="mt-2 text-sm text-zinc-500">{tr("Invoice")}{" "}{completed.invoiceNo}</p>
             <p className="tabular text-3xl font-black text-zinc-900">{formatMoney(completed.total)}</p>
             <dl className="mt-4 space-y-1 rounded-xl bg-zinc-50 p-3 text-sm">
               <div className="flex justify-between">
@@ -795,21 +794,21 @@ export default function PosPage() {
         ) : null}
       </Modal>
 
-      <Modal open={heldOpen} onClose={closeHeld} title={t("pos.held")} description="Parked on this computer. Resume one to carry on where you stopped." size="sm">
+      <Modal open={heldOpen} onClose={closeHeld} title={t("pos.held")} description={tr("Parked on this computer. Resume one to carry on where you stopped.")} size="sm">
         <ul className="divide-y divide-zinc-100">
           {held.map((sale) => (
             <li key={sale.id} className="flex items-center justify-between gap-3 py-3">
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-zinc-900">{sale.label}</p>
                 <p className="text-xs text-zinc-500">
-                  {sale.cart.length} item{sale.cart.length === 1 ? "" : "s"} · {formatDateTime(sale.savedAt)}
+                  {sale.cart.length}{" "}{tr("item")}{sale.cart.length === 1 ? "" : "s"} · {formatDateTime(sale.savedAt)}
                 </p>
               </div>
               <div className="flex shrink-0 gap-1.5">
                 <Button size="sm" onClick={() => resumeSale(sale)}>
                   {t("pos.resume")}
                 </Button>
-                <Button size="sm" variant="ghost" aria-label="Delete held sale" onClick={() => saveHeld(held.filter((item) => item.id !== sale.id))}>
+                <Button size="sm" variant="ghost" aria-label={tr("Delete held sale")} onClick={() => saveHeld(held.filter((item) => item.id !== sale.id))}>
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>

@@ -1,8 +1,10 @@
 "use client";
 
 import { Printer } from "lucide-react";
+import { useTr } from "@/components/layout/language";
 
 export function BarcodePrintButton({ name, sku, barcode }: { name: string; sku: string; barcode: string }) {
+  const tr = useTr();
   function printLabel() {
     const escape = (value: string) => value.replace(/[&<>"']/g, (ch) => `&#${ch.charCodeAt(0)};`);
     const safeName = escape(name);
@@ -38,9 +40,7 @@ export function BarcodePrintButton({ name, sku, barcode }: { name: string; sku: 
   }
 
   return (
-    <button type="button" onClick={printLabel} title="Print barcode label" className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2.5 text-xs font-semibold text-zinc-800 hover:bg-zinc-50">
-      <Printer className="h-3.5 w-3.5" />
-      Label
-    </button>
+    <button type="button" onClick={printLabel} title={tr("Print barcode label")} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2.5 text-xs font-semibold text-zinc-800 hover:bg-zinc-50">
+      <Printer className="h-3.5 w-3.5" />{tr("Label")}</button>
   );
 }

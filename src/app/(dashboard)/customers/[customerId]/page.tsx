@@ -11,8 +11,10 @@ import { buttonClass } from "@/components/ui/button";
 import { PrintButton } from "@/components/ui/print-button";
 import { Statement, type StatementRow } from "@/components/ui/statement";
 import { ReceivePayment } from "../receive-payment";
+import { getTr } from "@/lib/i18n-server";
 
 export default async function CustomerStatementPage({ params }: { params: Promise<{ customerId: string }> }) {
+  const tr = await getTr();
   const { customerId } = await params;
   const { user, branchId } = await getSessionContext();
   if (!branchId) notFound();
@@ -32,19 +34,19 @@ export default async function CustomerStatementPage({ params }: { params: Promis
   ]);
 
   const rows: StatementRow[] = [
-    ...sales.map((sale) => ({ date: sale.saleDate, description: "Sale", reference: sale.invoiceNo, charge: toNumber(sale.totalAmount), payment: 0 })),
+    ...sales.map((sale) => ({ date: sale.saleDate, description: tr("Sale"), reference: sale.invoiceNo, charge: toNumber(sale.totalAmount), payment: 0 })),
     ...payments.map((payment) =>
       payment.refundId
-        ? { date: payment.createdAt, description: "Refund paid back to customer", reference: humanize(payment.method), charge: toNumber(payment.amount), payment: 0 }
+        ? { date: payment.createdAt, description: tr("Refund paid back to customer"), reference: tr(humanize(payment.method)), charge: toNumber(payment.amount), payment: 0 }
         : {
             date: payment.createdAt,
-            description: payment.sale ? "Payment received" : "Due payment received",
-            reference: [payment.sale?.invoiceNo, humanize(payment.method)].filter(Boolean).join(" · "),
+            description: payment.sale ? tr("Payment received") : tr("Due payment received"),
+            reference: [payment.sale?.invoiceNo, tr(humanize(payment.method))].filter(Boolean).join(" · "),
             charge: 0,
             payment: toNumber(payment.amount),
           },
     ),
-    ...refunds.map((refund) => ({ date: refund.refundDate, description: "Items returned", reference: refund.refundNo, charge: 0, payment: toNumber(refund.refundAmount) })),
+    ...refunds.map((refund) => ({ date: refund.refundDate, description: tr("Items returned"), reference: refund.refundNo, charge: 0, payment: toNumber(refund.refundAmount) })),
   ];
 
   const due = toNumber(customer.outstanding);
@@ -59,25 +61,21 @@ export default async function CustomerStatementPage({ params }: { params: Promis
     <Statement
       businessName={businessName}
       businessLine={[setting?.address, setting?.phone].filter(Boolean).join(" · ")}
-      title="Customer statement"
+      title={tr("Customer statement")}
       party={customer.name}
-      partyLines={[customer.company ?? "", customer.phone ?? "", customer.address ?? "", `Customer code ${customer.customerCode}`]}
+      partyLines={[customer.company ?? "", customer.phone ?? "", customer.address ?? "", tr("Customer code {0}", customer.customerCode)]}
       rows={rows}
-      balanceLabel="Balance due"
+      balanceLabel={tr("Balance due")}
       actions={
         <>
           <Link href="/customers" className={buttonClass("ghost", "md", "mr-auto")}>
-            <ArrowLeft className="h-4 w-4" />
-            Customers
-          </Link>
+            <ArrowLeft className="h-4 w-4" />{tr("Customers")}</Link>
           {due > 0 && reminder ? (
             <a href={reminder} target="_blank" rel="noreferrer" className={buttonClass("secondary")}>
-              <MessageCircle className="h-4 w-4" />
-              WhatsApp reminder
-            </a>
+              <MessageCircle className="h-4 w-4" />{tr("WhatsApp reminder")}</a>
           ) : null}
           {due > 0 && canCollect ? <ReceivePayment customerId={customer.id} name={customer.name} outstanding={due} accounts={accounts} size="md" /> : null}
-          <PrintButton label="Print statement" />
+          <PrintButton label={tr("Print statement")} />
         </>
       }
     />

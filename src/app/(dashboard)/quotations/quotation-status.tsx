@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import { sendJson } from "@/lib/client-api";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { useTr } from "@/components/layout/language";
 
 export function RejectQuotation({ quotationId }: { quotationId: string }) {
+  const tr = useTr();
   const router = useRouter();
   const toast = useToast();
   const [busy, setBusy] = useState(false);
@@ -22,7 +24,7 @@ export function RejectQuotation({ quotationId }: { quotationId: string }) {
 
   return (
     <Button variant="ghost" onClick={reject} disabled={busy} className="text-red-700 hover:bg-red-50 hover:text-red-800">
-      {busy ? "Saving…" : "Customer said no"}
+      {busy ? tr("Saving…") : tr("Customer said no")}
     </Button>
   );
 }

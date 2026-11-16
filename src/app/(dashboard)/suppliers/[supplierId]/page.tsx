@@ -10,8 +10,10 @@ import { buttonClass } from "@/components/ui/button";
 import { PrintButton } from "@/components/ui/print-button";
 import { Statement, type StatementRow } from "@/components/ui/statement";
 import { PaySupplier } from "../pay-supplier";
+import { getTr } from "@/lib/i18n-server";
 
 export default async function SupplierStatementPage({ params }: { params: Promise<{ supplierId: string }> }) {
+  const tr = await getTr();
   const { supplierId } = await params;
   const { user, branchId } = await getSessionContext();
   if (!branchId) notFound();
@@ -35,15 +37,15 @@ export default async function SupplierStatementPage({ params }: { params: Promis
   const rows: StatementRow[] = [
     ...purchases.map((purchase) => ({
       date: purchase.purchaseDate,
-      description: "Purchase",
+      description: tr("Purchase"),
       reference: [purchase.purchaseNo, purchase.supplierInvoiceNo].filter(Boolean).join(" · "),
       charge: toNumber(purchase.totalAmount),
       payment: 0,
     })),
     ...payments.map((payment) => ({
       date: payment.createdAt,
-      description: "Payment made",
-      reference: [payment.purchase?.purchaseNo, humanize(payment.method)].filter(Boolean).join(" · "),
+      description: tr("Payment made"),
+      reference: [payment.purchase?.purchaseNo, tr(humanize(payment.method))].filter(Boolean).join(" · "),
       charge: 0,
       payment: toNumber(payment.amount),
     })),
@@ -55,19 +57,17 @@ export default async function SupplierStatementPage({ params }: { params: Promis
     <Statement
       businessName={setting?.businessName ?? DEFAULT_BUSINESS_NAME}
       businessLine={[setting?.address, setting?.phone].filter(Boolean).join(" · ")}
-      title="Supplier statement"
+      title={tr("Supplier statement")}
       party={supplier.name}
-      partyLines={[supplier.company ?? "", supplier.phone ?? "", supplier.address ?? "", `Supplier code ${supplier.supplierCode}`]}
+      partyLines={[supplier.company ?? "", supplier.phone ?? "", supplier.address ?? "", tr("Supplier code {0}", supplier.supplierCode)]}
       rows={rows}
-      balanceLabel="You owe"
+      balanceLabel={tr("You owe")}
       actions={
         <>
           <Link href="/suppliers" className={buttonClass("ghost", "md", "mr-auto")}>
-            <ArrowLeft className="h-4 w-4" />
-            Suppliers
-          </Link>
+            <ArrowLeft className="h-4 w-4" />{tr("Suppliers")}</Link>
           {owed > 0 && canPay ? <PaySupplier supplierId={supplier.id} name={supplier.name} owed={owed} accounts={accounts} size="md" /> : null}
-          <PrintButton label="Print statement" />
+          <PrintButton label={tr("Print statement")} />
         </>
       }
     />

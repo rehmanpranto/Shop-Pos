@@ -12,6 +12,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { SalesTrendChart } from "../dashboard/charts";
 import { ExportButton } from "./export-button";
+import { getTr } from "@/lib/i18n-server";
 
 const DAY = "yyyy-MM-dd";
 const MAX_DAYS = 366;
@@ -23,6 +24,7 @@ function parseDay(value: string | string[] | undefined): Date | null {
 }
 
 export default async function ReportsPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
+  const tr = await getTr();
   const params = await searchParams;
   const { branchId } = await getSessionContext();
   const today = startOfDay(new Date());
@@ -36,10 +38,10 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   const toText = format(to, DAY);
 
   const presets = [
-    { label: "Today", from: today, to: today },
-    { label: "Last 7 days", from: subDays(today, 6), to: today },
-    { label: "Last 30 days", from: subDays(today, 29), to: today },
-    { label: "This month", from: startOfMonth(today), to: today },
+    { label: tr("Today"), from: today, to: today },
+    { label: tr("Last 7 days"), from: subDays(today, 6), to: today },
+    { label: tr("Last 30 days"), from: subDays(today, 29), to: today },
+    { label: tr("This month"), from: startOfMonth(today), to: today },
   ].map((preset) => ({ label: preset.label, from: format(preset.from, DAY), to: format(preset.to, DAY) }));
 
   const completed = { branchId: branchId ?? "", status: "COMPLETED" as const, saleDate: range };
@@ -119,9 +121,9 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   return (
     <div>
       <PageHeader
-        title="Reports"
-        description={`${format(from, "d MMM yyyy")} to ${format(to, "d MMM yyyy")}`}
-        actions={<ExportButton rows={exportRows} fileName={`sales-${fromText}-to-${toText}.csv`} label="Export daily sales (CSV)" />}
+        title={tr("Reports")}
+        description={tr("{0} to {1}", format(from, "d MMM yyyy"), format(to, "d MMM yyyy"))}
+        actions={<ExportButton rows={exportRows} fileName={`sales-${fromText}-to-${toText}.csv`} label={tr("Export daily sales (CSV)")} />}
       />
 
       <div className="mb-4 flex flex-wrap items-end gap-2">
@@ -145,43 +147,37 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
         </div>
         <form action="/reports" className="flex flex-wrap items-end gap-2 sm:ml-auto">
           <label className="block">
-            <span className="mb-1 block text-xs font-semibold text-zinc-600">From</span>
+            <span className="mb-1 block text-xs font-semibold text-zinc-600">{tr("From")}</span>
             <input type="date" name="from" defaultValue={fromText} max={format(today, DAY)} className={cn(inputClass, "w-40")} />
           </label>
           <label className="block">
-            <span className="mb-1 block text-xs font-semibold text-zinc-600">To</span>
+            <span className="mb-1 block text-xs font-semibold text-zinc-600">{tr("To")}</span>
             <input type="date" name="to" defaultValue={toText} max={format(today, DAY)} className={cn(inputClass, "w-40")} />
           </label>
-          <Button type="submit" variant="secondary">
-            Apply
-          </Button>
+          <Button type="submit" variant="secondary">{tr("Apply")}</Button>
         </form>
       </div>
 
       <section className="grid grid-cols-2 gap-3 xl:grid-cols-5">
-        <StatCard label="Revenue" value={formatMoney(revenue)} hint={`${sales.length} sales · avg ${formatMoney(sales.length ? revenue / sales.length : 0)}`} icon={Banknote} />
-        <StatCard label="Gross profit" value={formatMoney(grossProfit)} hint={revenue > 0 ? `${((grossProfit / revenue) * 100).toFixed(0)}% margin` : undefined} icon={TrendingUp} tone="green" />
-        <StatCard label="Expenses" value={formatMoney(expenseTotal)} icon={Wallet} tone="neutral" />
-        <StatCard label="Profit after expenses" value={formatMoney(net)} hint="Gross profit minus expenses" icon={Receipt} tone={net < 0 ? "red" : "green"} />
-        <StatCard label="Refunds" value={formatMoney(refundTotal)} hint={`${refunds._count.id} refund${refunds._count.id === 1 ? "" : "s"} · ${formatMoney(unpaid)} still unpaid`} icon={RotateCcw} tone="amber" />
+        <StatCard label={tr("Revenue")} value={formatMoney(revenue)} hint={tr("{0} sales · avg {1}", sales.length, formatMoney(sales.length ? revenue / sales.length : 0))} icon={Banknote} />
+        <StatCard label={tr("Gross profit")} value={formatMoney(grossProfit)} hint={revenue > 0 ? tr("{0}% margin", ((grossProfit / revenue) * 100).toFixed(0)) : undefined} icon={TrendingUp} tone="green" />
+        <StatCard label={tr("Expenses")} value={formatMoney(expenseTotal)} icon={Wallet} tone="neutral" />
+        <StatCard label={tr("Profit after expenses")} value={formatMoney(net)} hint={tr("Gross profit minus expenses")} icon={Receipt} tone={net < 0 ? "red" : "green"} />
+        <StatCard label={tr("Refunds")} value={formatMoney(refundTotal)} hint={tr("{0} refund{1} · {2} still unpaid", refunds._count.id, refunds._count.id === 1 ? "" : "s", formatMoney(unpaid))} icon={RotateCcw} tone="amber" />
       </section>
 
       <Card className="mt-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle>Sales by day</CardTitle>
+          <CardTitle>{tr("Sales by day")}</CardTitle>
           <div className="flex items-center gap-4 text-xs text-zinc-500">
             <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-full bg-brand" />
-              Sales
-            </span>
+              <span className="h-2.5 w-2.5 rounded-full bg-brand" />{tr("Sales")}</span>
             <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-full bg-brand-accent" />
-              Gross profit
-            </span>
+              <span className="h-2.5 w-2.5 rounded-full bg-brand-accent" />{tr("Gross profit")}</span>
           </div>
         </div>
         {sales.length === 0 ? (
-          <p className="py-16 text-center text-sm text-zinc-500">No sales in this period.</p>
+          <p className="py-16 text-center text-sm text-zinc-500">{tr("No sales in this period.")}</p>
         ) : (
           <div className="mt-4 h-64">
             <SalesTrendChart data={dailyRows} />
@@ -191,43 +187,43 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
 
       <section className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
         {breakdown(
-          "Payments received by method",
-          payments.map((p) => ({ name: humanize(p.method), value: toNumber(p._sum.amount) })).sort((a, b) => b.value - a.value),
-          "No payments in this period.",
+          tr("Payments received by method"),
+          payments.map((p) => ({ name: tr(humanize(p.method)), value: toNumber(p._sum.amount) })).sort((a, b) => b.value - a.value),
+          tr("No payments in this period."),
         )}
         {breakdown(
-          "Sales by cashier",
-          [...cashiers.entries()].map(([name, c]) => ({ name, value: c.sales, extra: `${c.count} sales` })).sort((a, b) => b.value - a.value),
-          "No sales in this period.",
+          tr("Sales by cashier"),
+          [...cashiers.entries()].map(([name, c]) => ({ name, value: c.sales, extra: tr("{0} sales", c.count) })).sort((a, b) => b.value - a.value),
+          tr("No sales in this period."),
         )}
         {breakdown(
-          "Expenses by category",
+          tr("Expenses by category"),
           expenses
-            .map((e) => ({ name: categories.find((c) => c.id === e.categoryId)?.name ?? "Other", value: toNumber(e._sum.amount) }))
+            .map((e) => ({ name: categories.find((c) => c.id === e.categoryId)?.name ?? tr("Other"), value: toNumber(e._sum.amount) }))
             .sort((a, b) => b.value - a.value),
-          "No expenses in this period.",
+          tr("No expenses in this period."),
         )}
       </section>
 
-      <h3 className="mb-3 mt-6 text-base font-bold text-zinc-900">Top products by revenue</h3>
+      <h3 className="mb-3 mt-6 text-base font-bold text-zinc-900">{tr("Top products by revenue")}</h3>
       <TableCard>
         {items.length === 0 ? (
-          <p className="py-10 text-center text-sm text-zinc-500">Nothing sold in this period.</p>
+          <p className="py-10 text-center text-sm text-zinc-500">{tr("Nothing sold in this period.")}</p>
         ) : (
           <table className="data-table">
             <thead>
               <tr>
                 <th>#</th>
-                <th>Product</th>
-                <th className="num">Quantity sold</th>
-                <th className="num">Revenue</th>
+                <th>{tr("Product")}</th>
+                <th className="num">{tr("Quantity sold")}</th>
+                <th className="num">{tr("Revenue")}</th>
               </tr>
             </thead>
             <tbody>
               {items.map((item, i) => (
                 <tr key={item.productId}>
                   <td className="text-zinc-500">{i + 1}</td>
-                  <td className="font-semibold text-zinc-900">{productNames.get(item.productId) ?? "Unknown"}</td>
+                  <td className="font-semibold text-zinc-900">{productNames.get(item.productId) ?? tr("Unknown")}</td>
                   <td className="num">{formatQty(item._sum.qty)}</td>
                   <td className="num font-semibold">{formatMoney(item._sum.lineTotal)}</td>
                 </tr>

@@ -6,6 +6,7 @@ import type { ApiResult } from "@/lib/client-api";
 import { Button } from "./button";
 import { Modal } from "./modal";
 import { useToast } from "./toast";
+import { useTr } from "@/components/layout/language";
 
 type ButtonLook = { variant?: "primary" | "secondary" | "ghost" | "danger" | "accent"; size?: "sm" | "md" | "lg" };
 
@@ -34,6 +35,7 @@ export function FormModal({
   onSubmit: (form: FormData) => Promise<ApiResult<unknown> | string>;
   children: ReactNode;
 }) {
+  const tr = useTr();
   const router = useRouter();
   const toast = useToast();
   const [open, setOpen] = useState(false);
@@ -82,11 +84,9 @@ export function FormModal({
             </p>
           ) : null}
           <div className="mt-5 flex justify-end gap-2">
-            <Button variant="secondary" onClick={close}>
-              Cancel
-            </Button>
+            <Button variant="secondary" onClick={close}>{tr("Cancel")}</Button>
             <Button type="submit" disabled={saving}>
-              {saving ? "Saving…" : submitLabel}
+              {saving ? tr("Saving…") : tr(submitLabel)}
             </Button>
           </div>
         </form>

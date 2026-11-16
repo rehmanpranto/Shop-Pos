@@ -1,10 +1,19 @@
 import type { Metadata, Viewport } from "next";
-import { Geist_Mono, Montserrat } from "next/font/google";
+import { Geist_Mono, Hind_Siliguri, Montserrat } from "next/font/google";
+import { LanguageProvider } from "@/components/layout/language";
+import { getLanguage } from "@/lib/i18n-server";
 import "./globals.css";
 
 const montserrat = Montserrat({
   variable: "--font-montserrat",
   subsets: ["latin"],
+});
+
+// Montserrat has no Bangla letters; this font is used for them.
+const hindSiliguri = Hind_Siliguri({
+  variable: "--font-bangla",
+  subsets: ["bengali"],
+  weight: ["400", "500", "600", "700"],
 });
 
 const geistMono = Geist_Mono({
@@ -24,14 +33,15 @@ export const viewport: Viewport = {
   themeColor: "#0f2236",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const language = await getLanguage();
   return (
     <html
-      lang="en"
-      className={`${montserrat.variable} ${geistMono.variable} h-full antialiased`}
+      lang={language}
+      className={`${montserrat.variable} ${hindSiliguri.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body suppressHydrationWarning className="min-h-full flex flex-col">
-        {children}
+        <LanguageProvider initialLanguage={language}>{children}</LanguageProvider>
       </body>
     </html>
   );

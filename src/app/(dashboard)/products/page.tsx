@@ -12,8 +12,10 @@ import { BarcodePrintButton } from "./barcode-print-button";
 import { ProductForm } from "./product-form";
 import { ProductImport, StockTransfer } from "./product-tools";
 import { StockAdjust } from "./stock-adjust";
+import { getTr } from "@/lib/i18n-server";
 
 export default async function ProductsPage() {
+  const tr = await getTr();
   const { user, branchId } = await getSessionContext();
   const [products, units, categoryRows, suppliers, otherBranches] = branchId
     ? await Promise.all([
@@ -42,7 +44,7 @@ export default async function ProductsPage() {
 
   return (
     <div>
-      <PageHeader title="Products" description="Your catalogue, prices and stock levels." actions={
+      <PageHeader title={tr("Products")} description={tr("Your catalogue, prices and stock levels.")} actions={
           <>
             <ProductImport />
             {addProduct}
@@ -51,41 +53,41 @@ export default async function ProductsPage() {
       />
 
       <div className="mb-4 grid grid-cols-2 gap-3 xl:grid-cols-4">
-        <StatCard label="Products" value={`${products.length}`} icon={Package} />
-        <StatCard label="Stock value" value={formatMoney(stockValue)} hint="At average cost" icon={Boxes} tone="neutral" />
-        <StatCard label="Low stock" value={`${count("low")}`} icon={AlertTriangle} tone="amber" />
-        <StatCard label="Out of stock" value={`${count("out")}`} icon={PackageX} tone="red" />
+        <StatCard label={tr("Products")} value={`${products.length}`} icon={Package} />
+        <StatCard label={tr("Stock value")} value={formatMoney(stockValue)} hint={tr("At average cost")} icon={Boxes} tone="neutral" />
+        <StatCard label={tr("Low stock")} value={`${count("low")}`} icon={AlertTriangle} tone="amber" />
+        <StatCard label={tr("Out of stock")} value={`${count("out")}`} icon={PackageX} tone="red" />
       </div>
 
       {products.length === 0 ? (
         <TableCard>
           <EmptyState
             icon={Package}
-            title="No products yet"
-            description="Add your first product with its price and opening stock. It will show up in the POS straight away."
+            title={tr("No products yet")}
+            description={tr("Add your first product with its price and opening stock. It will show up in the POS straight away.")}
             action={addProduct}
           />
         </TableCard>
       ) : (
         <TableSearch
-          placeholder="Search name, SKU or category"
+          placeholder={tr("Search name, SKU or category")}
           filters={[
-            { label: "Low stock", value: "low" },
-            { label: "Out of stock", value: "out" },
-            { label: "Hidden", value: "inactive" },
+            { label: tr("Low stock"), value: "low" },
+            { label: tr("Out of stock"), value: "out" },
+            { label: tr("Hidden"), value: "inactive" },
           ]}
         >
           <TableCard>
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Product</th>
-                  <th>Category</th>
-                  <th className="num">In stock</th>
-                  <th className="num">Cost</th>
-                  <th className="num">Retail</th>
-                  <th className="num">Wholesale</th>
-                  <th className="num">Actions</th>
+                  <th>{tr("Product")}</th>
+                  <th>{tr("Category")}</th>
+                  <th className="num">{tr("In stock")}</th>
+                  <th className="num">{tr("Cost")}</th>
+                  <th className="num">{tr("Retail")}</th>
+                  <th className="num">{tr("Wholesale")}</th>
+                  <th className="num">{tr("Actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -103,7 +105,7 @@ export default async function ProductsPage() {
                       <span className="font-semibold">
                         {formatQty(stock)} {p.baseUnit.code}
                       </span>{" "}
-                      {state === "out" ? <Badge tone="red">Out</Badge> : state === "low" ? <Badge tone="amber">Low</Badge> : state === "inactive" ? <Badge>Hidden</Badge> : null}
+                      {state === "out" ? <Badge tone="red">{tr("Out")}</Badge> : state === "low" ? <Badge tone="amber">{tr("Low")}</Badge> : state === "inactive" ? <Badge>{tr("Hidden")}</Badge> : null}
                     </td>
                     <td className="num text-zinc-600">{formatMoney(p.weightedAverageCost)}</td>
                     <td className="num font-semibold">{formatMoney(p.retailPrice)}</td>
