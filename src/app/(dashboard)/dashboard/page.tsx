@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { format, startOfDay, startOfMonth, subDays } from "date-fns";
+import { subDays } from "date-fns";
 import { AlertTriangle, ArrowRight, Banknote, Check, HandCoins, Package, Receipt, TrendingUp, Wallet } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getSessionContext } from "@/lib/session";
@@ -10,9 +10,19 @@ import { Badge, StatusBadge } from "@/components/ui/badge";
 import { buttonClass } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PaymentDonut, PaymentLegend, SalesTrendChart, TopProductsChart } from "./charts";
+import { LocalClock } from "./local-clock";
 import { getTr } from "@/lib/i18n-server";
 
 const TREND_DAYS = 14;
+const DHAKA_OFFSET = "+06:00";
+
+function dhakaDateKey(date: Date) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Dhaka" }).format(date);
+}
+
+function dhakaStartOfDay(date: Date) {
+  return new Date(`${dhakaDateKey(date)}T00:00:00${DHAKA_OFFSET}`);
+}
 
 export default async function DashboardPage() {
   const tr = await getTr();
@@ -22,16 +32,25 @@ export default async function DashboardPage() {
   }
 
   const now = new Date();
-  const today = startOfDay(now);
+  const dhakaDate = new Intl.DateTimeFormat("en-BD", {
+    timeZone: "Asia/Dhaka",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(now);
+  const dhakaHour = Number(new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Dhaka", hour: "numeric", hour12: false }).format(now));
+  const today = dhakaStartOfDay(now);
   const yesterday = subDays(today, 1);
   const trendStart = subDays(today, TREND_DAYS - 1);
+  const monthStart = new Date(`${dhakaDateKey(now).slice(0, 7)}-01T00:00:00${DHAKA_OFFSET}`);
   const completed = { branchId, status: "COMPLETED" as const };
 
   const [todaySales, yesterdaySales, monthSales, trendSales, todayExpenses, todayRefunds, products, receivables, recentSales, payments, topItems, customerCount] =
     await Promise.all([
       prisma.sale.aggregate({ where: { ...completed, saleDate: { gte: today } }, _sum: { totalAmount: true, grossProfit: true }, _count: { id: true } }),
       prisma.sale.aggregate({ where: { ...completed, saleDate: { gte: yesterday, lt: today } }, _sum: { totalAmount: true } }),
-      prisma.sale.aggregate({ where: { ...completed, saleDate: { gte: startOfMonth(now) } }, _sum: { totalAmount: true, grossProfit: true }, _count: { id: true } }),
+      prisma.sale.aggregate({ where: { ...completed, saleDate: { gte: monthStart } }, _sum: { totalAmount: true, grossProfit: true }, _count: { id: true } }),
       prisma.sale.findMany({ where: { ...completed, saleDate: { gte: trendStart } }, select: { saleDate: true, totalAmount: true, grossProfit: true } }),
       prisma.expense.aggregate({ where: { branchId, date: { gte: today } }, _sum: { amount: true } }),
       prisma.refund.aggregate({ where: { branchId, refundDate: { gte: today }, status: "COMPLETED" }, _sum: { refundAmount: true } }),
@@ -55,10 +74,10 @@ export default async function DashboardPage() {
   const buckets = new Map<string, { label: string; sales: number; profit: number }>();
   for (let i = 0; i < TREND_DAYS; i += 1) {
     const day = subDays(today, TREND_DAYS - 1 - i);
-    buckets.set(format(day, "yyyy-MM-dd"), { label: format(day, "d MMM"), sales: 0, profit: 0 });
+    buckets.set(dhakaDateKey(day), { label: new Intl.DateTimeFormat("en-BD", { timeZone: "Asia/Dhaka", day: "numeric", month: "short" }).format(day), sales: 0, profit: 0 });
   }
   for (const sale of trendSales) {
-    const bucket = buckets.get(format(sale.saleDate, "yyyy-MM-dd"));
+    const bucket = buckets.get(dhakaDateKey(sale.saleDate));
     if (bucket) {
       bucket.sales += toNumber(sale.totalAmount);
       bucket.profit += toNumber(sale.grossProfit);
@@ -89,7 +108,7 @@ export default async function DashboardPage() {
     { done: recentSales.length > 0, title: tr("Make your first sale"), text: tr("Open the POS and ring it up."), href: "/pos" },
   ];
   const showSetup = steps.some((step) => !step.done);
-  const hour = now.getHours();
+  const hour = dhakaHour;
   const greeting = hour < 12 ? tr("Good morning") : hour < 17 ? tr("Good afternoon") : tr("Good evening");
 
   return (
@@ -99,7 +118,9 @@ export default async function DashboardPage() {
           <h2 className="text-xl font-bold tracking-tight text-zinc-900 sm:text-2xl">
             {greeting}, {user?.name?.split(" ")[0] ?? "there"}
           </h2>
-          <p className="mt-0.5 text-sm text-zinc-500">{format(now, "EEEE, d MMMM yyyy")}</p>
+          <p className="mt-0.5 text-sm text-zinc-500">
+            {dhakaDate} · <LocalClock initialTime={now.getTime()} />
+          </p>
         </div>
         <Link href="/reports" className={buttonClass("secondary")}>{tr("Full reports")}<ArrowRight className="h-4 w-4" />
         </Link>
