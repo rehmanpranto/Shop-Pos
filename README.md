@@ -243,7 +243,8 @@ Useful commands:
 | Command | What it does |
 | --- | --- |
 | `npm run dev` | start the app for development |
-| `npm run build` then `npm start` | run the production build on a normal server |
+| `npm run build` | build the app for Cloudflare |
+| `npm run build:next` then `npm start` | run the production build on a normal server |
 | `npm run lint` | check the code |
 | `npm run preview` | run the Cloudflare build on your computer |
 | `npm run db:migrate` | create a new database migration |
@@ -252,9 +253,9 @@ Useful commands:
 
 1. In the Cloudflare dashboard go to **Workers & Pages → Create → Import a
    repository** and pick this repository. Keep the project name `shop-pos`.
-2. In the build settings enter:
-   - Build command: `npx opennextjs-cloudflare build`
-   - Deploy command: `npx opennextjs-cloudflare deploy`
+2. Leave the build settings as Cloudflare fills them in:
+   - Build command: `npm run build`
+   - Deploy command: `npx wrangler deploy`
 3. Under **Settings → Variables and Secrets** add these, each as type
    **Secret**, then redeploy:
    - `DATABASE_URL`
@@ -271,7 +272,7 @@ Good to know:
   time than the free plan's 10 ms per request.
 - Invoice email uses SMTP and has not been tested on Cloudflare.
 
-The app also runs on any host that supports Next.js (`npm run build`, `npm start`).
+The app also runs on any host that supports Next.js (`npm run build:next`, `npm start`).
 
 ## Staff roles
 
