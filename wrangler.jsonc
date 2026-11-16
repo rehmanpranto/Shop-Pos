@@ -4,6 +4,11 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "shop-pos",
+  // Cloudflare's default deploy command (npx wrangler deploy) runs this first,
+  // so no build or deploy command has to be typed in the Cloudflare dashboard.
+  "build": {
+    "command": "npx opennextjs-cloudflare build"
+  },
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-10-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],

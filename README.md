@@ -51,31 +51,29 @@ rotate or remove `BOOTSTRAP_SETUP_KEY`.
 
 ## Cloudflare deployment
 
-The app runs on Cloudflare Workers through the OpenNext adapter. The files
-`wrangler.jsonc` and `open-next.config.ts` hold the configuration.
+The app runs on Cloudflare Workers through the OpenNext adapter. `wrangler.jsonc`
+tells Cloudflare how to build and deploy it, so no build or deploy command has
+to be entered.
 
 1. In the Cloudflare dashboard go to **Workers & Pages → Create → Import a
-   repository** and pick this repository. Keep the project name `shop-pos`
-   (it must match `name` in `wrangler.jsonc`).
-2. Set the build settings:
-   - Build command: `npx opennextjs-cloudflare build`
-   - Deploy command: `npx opennextjs-cloudflare deploy`
-3. Under **Settings → Variables and Secrets** add these, each as type
-   **Secret**. Add them under **Build → Variables and secrets** as well, so the
-   build can read them:
+   repository**, pick this repository, and leave every setting as it is
+   (project name `shop-pos`, deploy command `npx wrangler deploy`).
+2. Under **Settings → Variables and Secrets** add these, each as type
+   **Secret**, then redeploy:
    - `DATABASE_URL` — Neon pooled connection string
    - `NEXTAUTH_SECRET` — a long random secret
    - `BOOTSTRAP_SETUP_KEY` — a separate random setup key
-4. Deploy. `NEXTAUTH_URL` is not needed; sign-in works on whatever address the
-   app is served from.
+
+Secrets cannot be stored in the repository, so step 2 has to be done by hand.
+`NEXTAUTH_URL` is not needed; sign-in works on whatever address the app is
+served from.
 
 The Workers **Paid** plan is required: the compressed app is about 3.8 MB
 (the free plan allows 3 MB) and checking a password needs more processing time
 than the free plan's 10 ms per request.
 
 To try the Cloudflare build on your own computer, copy `.dev.vars.example` to
-`.dev.vars`, fill it in, and run `npm run preview`. `npm run deploy` builds and
-deploys from your computer instead of from GitHub.
+`.dev.vars`, fill it in, and run `npm run preview`.
 
 Invoice email uses SMTP and has not been tested on Cloudflare.
 
