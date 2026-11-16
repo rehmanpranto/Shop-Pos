@@ -13,7 +13,7 @@ export default withAuth(
     }
     return NextResponse.next();
   },
-  { pages: { signIn: "/login" } },
+  { pages: { signIn: "/login" }, secret: process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET },
 );
 
 export const config = {

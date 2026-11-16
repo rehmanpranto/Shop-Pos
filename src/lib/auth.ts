@@ -7,7 +7,11 @@ import { prisma } from "@/lib/prisma";
 import { fail } from "@/lib/response";
 import { can } from "@/lib/rbac";
 
+/** Key that signs the session cookie. Either name works; Cloudflare setups often use AUTH_SECRET. */
+export const authSecret = process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET;
+
 export const authOptions: AuthOptions = {
+  secret: authSecret,
   session: { strategy: "jwt" },
   providers: [
     CredentialsProvider({
