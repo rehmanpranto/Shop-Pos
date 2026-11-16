@@ -1,14 +1,12 @@
 // Cloudflare Workers configuration for the shop app (built with OpenNext).
+// In Cloudflare's build settings use:
+//   Build command:  npx opennextjs-cloudflare build
+//   Deploy command: npx opennextjs-cloudflare deploy
 // Secrets are NOT stored here. Add DATABASE_URL, NEXTAUTH_SECRET and BOOTSTRAP_SETUP_KEY
 // in the Cloudflare dashboard under Settings > Variables and Secrets (type: Secret).
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "shop-pos",
-  // Cloudflare's default deploy command (npx wrangler deploy) runs this first,
-  // so no build or deploy command has to be typed in the Cloudflare dashboard.
-  "build": {
-    "command": "npx opennextjs-cloudflare build"
-  },
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-10-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],

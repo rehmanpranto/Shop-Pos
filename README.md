@@ -250,12 +250,12 @@ Useful commands:
 
 ## Deploy to Cloudflare
 
-`wrangler.jsonc` tells Cloudflare how to build and deploy the app, so no build
-or deploy command has to be entered.
-
 1. In the Cloudflare dashboard go to **Workers & Pages → Create → Import a
-   repository**, pick this repository, and leave every setting as it is.
-2. Under **Settings → Variables and Secrets** add these, each as type
+   repository** and pick this repository. Keep the project name `shop-pos`.
+2. In the build settings enter:
+   - Build command: `npx opennextjs-cloudflare build`
+   - Deploy command: `npx opennextjs-cloudflare deploy`
+3. Under **Settings → Variables and Secrets** add these, each as type
    **Secret**, then redeploy:
    - `DATABASE_URL`
    - `NEXTAUTH_SECRET`
@@ -263,7 +263,7 @@ or deploy command has to be entered.
 
 Good to know:
 
-- Secrets cannot be stored in the repository, so step 2 has to be done by hand.
+- Secrets cannot be stored in the repository, so step 3 has to be done by hand.
 - `NEXTAUTH_URL` is not needed on Cloudflare; sign-in works on whatever address
   the app is served from.
 - The Workers **Paid** plan is required. The compressed app is about 3.8 MB
