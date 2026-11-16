@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { UserRole } from "@prisma/client";
 import { prisma } from "../src/lib/prisma";
-import { DEFAULT_BRANCH_CODE, DEFAULT_BRANCH_NAME, DEFAULT_UNITS } from "../src/lib/constants";
+import { DEFAULT_BRANCH_CODE, DEFAULT_BRANCH_NAME, DEFAULT_BUSINESS_NAME, DEFAULT_UNITS } from "../src/lib/constants";
 
 async function main() {
   let branch = await prisma.branch.findFirst({ where: { code: DEFAULT_BRANCH_CODE } });
@@ -22,13 +22,12 @@ async function main() {
   await prisma.businessSetting.upsert({
     where: { id: "default-settings" },
     update: {
-      businessName: "Hardware ERP POS",
       currency: "BDT",
       currencySymbol: "৳",
     },
     create: {
       id: "default-settings",
-      businessName: "Hardware ERP POS",
+      businessName: DEFAULT_BUSINESS_NAME,
       currency: "BDT",
       currencySymbol: "৳",
     },

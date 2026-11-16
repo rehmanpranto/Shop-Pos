@@ -1,72 +1,64 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { Plus } from "lucide-react";
+import { sendJson } from "@/lib/client-api";
+import { Field, Input, Select } from "@/components/ui/field";
+import { FormModal, number, optionalText, text } from "@/components/ui/form-modal";
+import { useTr } from "@/components/layout/language";
 
 export function CustomerCreateForm() {
-  const [open, setOpen] = useState(false);
-  const [message, setMessage] = useState("");
-  const [saving, setSaving] = useState(false);
-
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setSaving(true);
-    setMessage("");
-    const form = new FormData(event.currentTarget);
-    const response = await fetch("/api/customers", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        customerCode: form.get("customerCode"),
-        name: form.get("name"),
-        phone: form.get("phone") || undefined,
-        email: form.get("email") || undefined,
-        company: form.get("company") || undefined,
-        address: form.get("address") || undefined,
-        customerType: form.get("customerType") || undefined,
-        priceLevel: form.get("priceLevel"),
-        creditLimit: Number(form.get("creditLimit")),
-        openingBalance: Number(form.get("openingBalance")),
-      }),
-    });
-    const result = await response.json();
-    setSaving(false);
-
-    if (!response.ok || !result.success) {
-      setMessage(result.error?.message ?? "Could not add customer");
-      return;
-    }
-
-    window.location.reload();
-  }
-
+  const tr = useTr();
   return (
-    <div className="mt-4">
-      <button type="button" onClick={() => setOpen((value) => !value)} className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800">
-        {open ? "Close" : "+ Add Customer"}
-      </button>
-      {open ? (
-        <form onSubmit={submit} className="mt-4 grid gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4 md:grid-cols-2 xl:grid-cols-4">
-          <input name="customerCode" placeholder="Customer code" required className="rounded-lg border border-zinc-300 bg-white px-3 py-2" />
-          <input name="name" placeholder="Customer name" required className="rounded-lg border border-zinc-300 bg-white px-3 py-2" />
-          <input name="phone" placeholder="Phone" className="rounded-lg border border-zinc-300 bg-white px-3 py-2" />
-          <input name="email" type="email" placeholder="Email" className="rounded-lg border border-zinc-300 bg-white px-3 py-2" />
-          <input name="company" placeholder="Company" className="rounded-lg border border-zinc-300 bg-white px-3 py-2" />
-          <input name="customerType" placeholder="Customer type" className="rounded-lg border border-zinc-300 bg-white px-3 py-2" />
-          <select name="priceLevel" defaultValue="RETAIL" className="rounded-lg border border-zinc-300 bg-white px-3 py-2">
-            <option value="RETAIL">Retail pricing</option>
-            <option value="WHOLESALE">Wholesale pricing</option>
-          </select>
-          <input name="address" placeholder="Address" className="rounded-lg border border-zinc-300 bg-white px-3 py-2" />
-          <input name="creditLimit" type="number" min="0" step="0.01" placeholder="Credit limit" defaultValue="0" className="rounded-lg border border-zinc-300 bg-white px-3 py-2" />
-          <input name="openingBalance" type="number" min="0" step="0.01" placeholder="Opening balance" defaultValue="0" className="rounded-lg border border-zinc-300 bg-white px-3 py-2" />
-          <div className="md:col-span-2 xl:col-span-4">
-            <button type="submit" disabled={saving} className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
-              {saving ? "Adding..." : "Save Customer"}
-            </button>
-            {message ? <p className="mt-2 text-sm text-red-600">{message}</p> : null}
-          </div>
-        </form>
-      ) : null}
-    </div>
+    <FormModal
+      trigger={
+        <>
+          <Plus className="h-4 w-4" />{tr("Add customer")}</>
+      }
+      title={tr("Add customer")}
+      submitLabel={tr("Add customer")}
+      successMessage={tr("Customer added")}
+      onSubmit={(form) =>
+        sendJson("/api/customers", {
+          customerCode: text(form, "customerCode") || `C-${Date.now().toString(36).toUpperCase()}`,
+          name: text(form, "name"),
+          phone: optionalText(form, "phone"),
+          email: optionalText(form, "email"),
+          company: optionalText(form, "company"),
+          address: optionalText(form, "address"),
+          priceLevel: text(form, "priceLevel"),
+          creditLimit: number(form, "creditLimit"),
+        })
+      }
+    >
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label={tr("Name")}>
+          <Input name="name" required placeholder={tr("Customer or contact name")} />
+        </Field>
+        <Field label={tr("Phone")}>
+          <Input name="phone" type="tel" placeholder={tr("01XXXXXXXXX")} />
+        </Field>
+        <Field label={tr("Company (optional)")}>
+          <Input name="company" />
+        </Field>
+        <Field label={tr("Email (optional)")} hint={tr("Needed to email invoices.")}>
+          <Input name="email" type="email" />
+        </Field>
+        <Field label={tr("Address (optional)")} className="sm:col-span-2">
+          <Input name="address" />
+        </Field>
+        <Field label={tr("Pricing")}>
+          <Select name="priceLevel" defaultValue="RETAIL">
+            <option value="RETAIL">{tr("Retail prices")}</option>
+            <option value="WHOLESALE">{tr("Wholesale prices")}</option>
+          </Select>
+        </Field>
+        <Field label={tr("Credit limit (৳)")}>
+          <Input name="creditLimit" type="number" min="0" step="0.01" defaultValue="0" />
+        </Field>
+        <Field label={tr("Customer code (optional)")} hint={tr("Leave blank to create one automatically.")}>
+          <Input name="customerCode" />
+        </Field>
+      </div>
+    </FormModal>
   );
 }

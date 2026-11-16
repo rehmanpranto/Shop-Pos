@@ -1,5 +1,7 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  // Lets the app talk to Postgres through a JavaScript driver, which Cloudflare Workers require.
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
@@ -426,6 +428,7 @@ model PurchaseItem {
   productId           String
   product             Product  @relation(fields: [productId], references: [id])
   qty                 Decimal  @db.Decimal(14, 3)
+  receivedQty         Decimal  @default(0) @db.Decimal(14, 3)
   unitId              String
   unit                Unit     @relation(fields: [unitId], references: [id])
   unitCost            Decimal  @db.Decimal(14, 4)
@@ -797,4 +800,14 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+/// Per-branch running number for invoices, purchases, refunds and other documents.
+model DocumentCounter {
+  id       String @id @default(cuid())
+  branchId String
+  entity   String
+  value    Int    @default(0)
+
+  @@unique([branchId, entity])
 }

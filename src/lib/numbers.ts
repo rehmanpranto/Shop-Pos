@@ -1,7 +1,12 @@
-import Decimal from "decimal.js";
+import { Prisma } from "@prisma/client";
 
-export const D = (v: Decimal.Value) => new Decimal(v);
+// Use the database library's own decimal type everywhere, so amounts read from the
+// database and amounts calculated in the app can always be combined with each other.
+export const Decimal = Prisma.Decimal;
+export type Decimal = Prisma.Decimal;
 
-export function money(v: Decimal.Value): string {
+export const D = (v: Prisma.Decimal.Value) => new Prisma.Decimal(v);
+
+export function money(v: Prisma.Decimal.Value): string {
   return D(v).toFixed(2);
 }

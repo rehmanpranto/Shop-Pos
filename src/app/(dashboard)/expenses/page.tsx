@@ -1,45 +1,83 @@
+import { format, startOfMonth } from "date-fns";
+import { CalendarDays, Wallet } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { Card } from "@/components/ui/card";
+import { getSessionContext } from "@/lib/session";
+import { formatDate, formatMoney, toNumber } from "@/lib/format";
+import { Badge } from "@/components/ui/badge";
+import { TableCard } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatCard } from "@/components/ui/stat-card";
+import { TableSearch } from "@/components/ui/table-search";
+import { ExpenseForm } from "./expense-form";
+import { getTr } from "@/lib/i18n-server";
 
 export default async function ExpensesPage() {
-  const branch = await prisma.branch.findFirst({ where: { isDefault: true } });
-  const items = branch
-    ? await prisma.expense.findMany({
-        where: { branchId: branch.id },
-        include: { category: true },
-        orderBy: { date: "desc" },
-      })
-    : [];
+  const tr = await getTr();
+  const { branchId } = await getSessionContext();
+  const now = new Date();
+  const [items, categories, accounts, month] = branchId
+    ? await Promise.all([
+        prisma.expense.findMany({ where: { branchId }, include: { category: true, account: true }, orderBy: { date: "desc" }, take: 300 }),
+        prisma.expenseCategory.findMany({ where: { branchId }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
+        prisma.paymentAccount.findMany({ where: { branchId, isActive: true }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
+        prisma.expense.groupBy({ by: ["categoryId"], where: { branchId, date: { gte: startOfMonth(now) } }, _sum: { amount: true } }),
+      ])
+    : [[], [], [], []];
+
+  const monthTotal = month.reduce((sum, row) => sum + toNumber(row._sum.amount), 0);
+  const biggest = [...month].sort((a, b) => toNumber(b._sum.amount) - toNumber(a._sum.amount))[0];
+  const biggestName = categories.find((c) => c.id === biggest?.categoryId)?.name;
+  const form = <ExpenseForm categories={categories} accounts={accounts} today={format(now, "yyyy-MM-dd")} />;
 
   return (
-    <Card>
-      <h2 className="text-lg font-bold">Expenses</h2>
-      <div className="mt-4 overflow-x-auto">
-        <table className="min-w-full text-sm">
-          <thead>
-            <tr className="border-b bg-zinc-50 text-left">
-              <th className="px-3 py-2">Expense ID</th>
-              <th className="px-3 py-2">Category</th>
-              <th className="px-3 py-2">Description</th>
-              <th className="px-3 py-2">Date</th>
-              <th className="px-3 py-2">Amount</th>
-              <th className="px-3 py-2">Method</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((e) => (
-              <tr key={e.id} className="border-b">
-                <td className="px-3 py-2">{e.expenseNo}</td>
-                <td className="px-3 py-2">{e.category.name}</td>
-                <td className="px-3 py-2">{e.description ?? "-"}</td>
-                <td className="px-3 py-2">{new Date(e.date).toLocaleDateString()}</td>
-                <td className="px-3 py-2">৳{Number(e.amount).toFixed(2)}</td>
-                <td className="px-3 py-2">{e.method}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <div>
+      <PageHeader title={tr("Expenses")} description={tr("Rent, salaries, bills and other running costs.")} actions={form} />
+
+      <div className="mb-4 grid grid-cols-2 gap-3 xl:grid-cols-4">
+        <StatCard label={tr("Spent in {0}", format(now, "MMMM"))} value={formatMoney(monthTotal)} icon={Wallet} />
+        <StatCard label={tr("Biggest cost this month")} value={biggestName ?? "-"} hint={biggest ? formatMoney(biggest._sum.amount) : undefined} icon={CalendarDays} tone="neutral" />
       </div>
-    </Card>
+
+      {items.length === 0 ? (
+        <TableCard>
+          <EmptyState icon={Wallet} title={tr("No expenses recorded")} description={tr("Record costs here so your reports show real profit, not just sales.")} action={form} />
+        </TableCard>
+      ) : (
+        <TableSearch placeholder={tr("Search category, payee or note")}>
+          <TableCard>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>{tr("Date")}</th>
+                  <th>{tr("Category")}</th>
+                  <th>{tr("Paid to")}</th>
+                  <th>{tr("Note")}</th>
+                  <th>{tr("Paid from")}</th>
+                  <th className="num">{tr("Amount")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((e) => (
+                  <tr key={e.id}>
+                    <td className="whitespace-nowrap">
+                      <p className="text-zinc-900">{formatDate(e.date)}</p>
+                      <p className="text-xs text-zinc-500">{e.expenseNo}</p>
+                    </td>
+                    <td>
+                      <Badge>{e.category.name}</Badge>
+                    </td>
+                    <td className="text-zinc-600">{e.vendor ?? "-"}</td>
+                    <td className="text-zinc-600">{e.description ?? "-"}</td>
+                    <td className="text-zinc-600">{e.account.name}</td>
+                    <td className="num font-semibold">{formatMoney(e.amount)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </TableCard>
+        </TableSearch>
+      )}
+    </div>
   );
 }

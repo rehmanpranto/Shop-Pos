@@ -1,12 +1,6 @@
-import {
-  EntryDirection,
-  InventoryReason,
-  MovementType,
-  PaymentMethod,
-  SalesStatus,
-} from "@prisma/client";
+import { EntryDirection, InventoryReason, MovementType, PaymentMethod, SalesStatus, UserRole } from "@prisma/client";
 import { nextCode } from "@/lib/ids";
-import { isAllowedProductUnit } from "@/lib/product-units";
+import { requireUnitFactor } from "@/lib/product-units";
 import { prisma } from "@/lib/prisma";
 import { D } from "@/lib/numbers";
 import { createLedgerEntry } from "@/server/services/ledger";
@@ -15,6 +9,8 @@ import { recordInventoryMovement } from "@/server/services/inventory";
 export type CreateSaleInput = {
   branchId: string;
   userId: string;
+  /** Role of the person selling. Only admins and managers may sell below the minimum price. */
+  userRole?: UserRole;
   customerId?: string;
   notes?: string;
   discountAmount: number;
@@ -37,69 +33,62 @@ export type CreateSaleInput = {
 };
 
 export async function createSale(input: CreateSaleInput) {
-  return prisma.$transaction(async (tx) => {
-    const invoiceNo = await nextCode("sale", "INV", input.branchId);
-    let subTotal = D(0);
-    let cogsAmount = D(0);
+  const canOverridePrice = input.userRole === "ADMIN" || input.userRole === "MANAGER";
 
+  return prisma.$transaction(async (tx) => {
     if (input.customerId) {
-      await tx.customer.findFirstOrThrow({
-        where: { id: input.customerId, branchId: input.branchId },
-      });
+      await tx.customer.findFirstOrThrow({ where: { id: input.customerId, branchId: input.branchId } });
     }
 
     const paymentAccountIds = [...new Set(input.payments.map((payment) => payment.accountId))];
-    if (paymentAccountIds.length > 0) {
-      const paymentAccounts = await tx.paymentAccount.findMany({
-        where: { branchId: input.branchId, id: { in: paymentAccountIds } },
-        select: { id: true },
-      });
-
-      if (paymentAccounts.length !== paymentAccountIds.length) {
-        throw new Error("Invalid payment account for sale");
-      }
+    const paymentAccounts = await tx.paymentAccount.findMany({
+      where: { branchId: input.branchId, id: { in: paymentAccountIds } },
+      select: { id: true },
+    });
+    if (paymentAccounts.length !== paymentAccountIds.length) {
+      throw new Error("Invalid payment account for sale");
     }
 
     const products = await tx.product.findMany({
-      where: {
-        id: { in: input.items.map((i) => i.productId) },
-        branchId: input.branchId,
-      },
-      include: {
-        unitConversions: {
-          select: {
-            fromUnitId: true,
-            toUnitId: true,
-          },
-        },
-      },
+      where: { id: { in: input.items.map((i) => i.productId) }, branchId: input.branchId },
+      include: { unitConversions: true },
     });
-
     const productMap = new Map(products.map((p) => [p.id, p]));
 
-    for (const item of input.items) {
-      const lineTotal = D(item.qty)
-        .mul(item.unitPrice)
-        .sub(item.discountAmount)
-        .add(item.taxAmount);
-
-      subTotal = subTotal.add(lineTotal);
-
+    // Price every line once, in the unit it is sold in.
+    const lines = input.items.map((item) => {
       const product = productMap.get(item.productId);
       if (!product) throw new Error("Invalid product in sale item");
-      if (!isAllowedProductUnit(product, item.unitId)) {
-        throw new Error(`Invalid unit for product ${product.name}`);
-      }
-      cogsAmount = cogsAmount.add(D(item.qty).mul(product.weightedAverageCost || product.purchasePrice));
-    }
+      if (!product.isActive) throw new Error(`${product.name} is not available for sale`);
 
+      const factor = requireUnitFactor(product, item.unitId);
+      const minimumPrice = D(product.minSellingPrice).mul(factor);
+      if (!canOverridePrice && D(item.unitPrice).lessThan(minimumPrice)) {
+        throw new Error(`${product.name} cannot be sold below ${minimumPrice.toFixed(2)}`);
+      }
+
+      const costPerBase = D(product.weightedAverageCost).greaterThan(0) ? D(product.weightedAverageCost) : D(product.purchasePrice);
+      const unitCost = costPerBase.mul(factor);
+      const lineTotal = D(item.qty).mul(item.unitPrice).sub(item.discountAmount).add(item.taxAmount);
+      if (lineTotal.lessThan(0)) throw new Error(`Discount on ${product.name} is more than the line total`);
+      return { item, product, unitCost, lineTotal, cogs: D(item.qty).mul(unitCost) };
+    });
+
+    const subTotal = lines.reduce((sum, line) => sum.add(line.lineTotal), D(0));
+    const cogsAmount = lines.reduce((sum, line) => sum.add(line.cogs), D(0));
     const totalAmount = subTotal.sub(input.discountAmount).add(input.taxAmount);
+    if (totalAmount.lessThan(0)) throw new Error("Discount is more than the sale total");
+
     const paidAmount = input.payments.reduce((acc, p) => acc.add(p.amount), D(0));
     if (paidAmount.greaterThan(totalAmount)) {
       throw new Error("Payment amount exceeds sale total");
     }
     const dueAmount = totalAmount.sub(paidAmount);
+    if (dueAmount.greaterThan(0) && !input.customerId) {
+      throw new Error("Choose a customer to sell on credit");
+    }
 
+    const invoiceNo = await nextCode(tx, "sale", "INV", input.branchId);
     const sale = await tx.sale.create({
       data: {
         invoiceNo,
@@ -119,16 +108,7 @@ export async function createSale(input: CreateSaleInput) {
       },
     });
 
-    for (const item of input.items) {
-      const product = productMap.get(item.productId)!;
-      if (!isAllowedProductUnit(product, item.unitId)) {
-        throw new Error(`Invalid unit for product ${product.name}`);
-      }
-      const lineTotal = D(item.qty)
-        .mul(item.unitPrice)
-        .sub(item.discountAmount)
-        .add(item.taxAmount);
-
+    for (const { item, unitCost, lineTotal } of lines) {
       await tx.saleItem.create({
         data: {
           saleId: sale.id,
@@ -136,7 +116,7 @@ export async function createSale(input: CreateSaleInput) {
           unitId: item.unitId,
           qty: D(item.qty),
           unitPrice: D(item.unitPrice),
-          unitCost: product.weightedAverageCost || product.purchasePrice,
+          unitCost,
           discountAmount: D(item.discountAmount),
           taxAmount: D(item.taxAmount),
           lineTotal,
@@ -180,7 +160,7 @@ export async function createSale(input: CreateSaleInput) {
         direction: EntryDirection.DEBIT,
         saleId: sale.id,
         customerId: input.customerId,
-        referenceNo: payment.referenceNo,
+        referenceNo: payment.referenceNo ?? invoiceNo,
       });
     }
 

@@ -8,6 +8,11 @@ import { fail } from "@/lib/response";
 import { can } from "@/lib/rbac";
 
 export const authOptions: AuthOptions = {
+  // Key that signs the session cookie. Either name works; Cloudflare setups often use AUTH_SECRET.
+  // Read on each use: on Cloudflare, settings are not available yet when this file first loads.
+  get secret() {
+    return process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET;
+  },
   session: { strategy: "jwt" },
   providers: [
     CredentialsProvider({
@@ -43,10 +48,21 @@ export const authOptions: AuthOptions = {
       if (user) {
         token.role = user.role;
         token.branchId = user.branchId;
+        token.checkedAt = Date.now();
+        return token;
+      }
+      // Re-read the account every few minutes so a role change or a disabled account takes effect quickly.
+      if (token.sub && Date.now() - ((token.checkedAt as number | undefined) ?? 0) > 5 * 60 * 1000) {
+        const current = await prisma.user.findUnique({ where: { id: token.sub }, select: { role: true, branchId: true, isActive: true } });
+        if (!current?.isActive) return {};
+        token.role = current.role;
+        token.branchId = current.branchId;
+        token.checkedAt = Date.now();
       }
       return token;
     },
     async session({ session, token }) {
+      if (!token.sub) return { ...session, user: undefined as never };
       if (session.user) {
         session.user.id = token.sub as string;
         session.user.role = (token.role as UserRole) ?? UserRole.CASHIER;

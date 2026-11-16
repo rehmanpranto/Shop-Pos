@@ -28,10 +28,17 @@ export async function createRefund(input: {
       });
     }
 
-    const refundNo = await nextCode("refund", "RF", input.branchId);
+    const refundNo = await nextCode(tx, "refund", "RF", input.branchId);
     let refundAmount = D(0);
 
     const saleItemsById = new Map(sale.items.map((i) => [i.id, i]));
+
+    // What the customer actually paid per unit: the line's own discount and tax, plus this
+    // line's share of any discount or tax applied to the whole sale.
+    const saleFactor = D(sale.subTotal).greaterThan(0) ? D(sale.totalAmount).div(sale.subTotal) : D(1);
+    const paidPerUnit = (source: (typeof sale.items)[number]) =>
+      D(source.qty).greaterThan(0) ? D(source.lineTotal).div(source.qty).mul(saleFactor) : D(0);
+    const refundLineTotal = (source: (typeof sale.items)[number], qty: number) => paidPerUnit(source).mul(qty).toDecimalPlaces(2);
     const refundedBySaleItemId = new Map<string, ReturnType<typeof D>>();
     for (const previousRefund of sale.refunds) {
       for (const previousItem of previousRefund.items) {
@@ -53,7 +60,7 @@ export async function createRefund(input: {
         throw new Error("Refund quantity exceeds remaining sold quantity");
       }
       requestedBySaleItemId.set(item.saleItemId, requestedQty);
-      refundAmount = refundAmount.add(D(item.qty).mul(source.unitPrice));
+      refundAmount = refundAmount.add(refundLineTotal(source, item.qty));
     }
 
     const refund = await tx.refund.create({
@@ -72,7 +79,7 @@ export async function createRefund(input: {
 
     for (const item of input.items) {
       const source = saleItemsById.get(item.saleItemId)!;
-      const lineTotal = D(item.qty).mul(source.unitPrice);
+      const lineTotal = refundLineTotal(source, item.qty);
 
       await tx.refundItem.create({
         data: {
@@ -81,7 +88,7 @@ export async function createRefund(input: {
           unitId: source.unitId,
           saleItemId: source.id,
           qty: D(item.qty),
-          unitPrice: source.unitPrice,
+          unitPrice: paidPerUnit(source),
           lineTotal,
         },
       });
@@ -127,7 +134,13 @@ export async function createRefund(input: {
       });
     }
 
-    if (sale.customerId) {
+    if (!input.accountId) {
+      // No cash was paid back, so the refund comes off what the customer owes on this sale.
+      if (!sale.customerId) throw new Error("Choose an account to pay the refund from");
+      if (refundAmount.greaterThan(sale.dueAmount)) {
+        throw new Error("Refund is more than the unpaid amount on this sale. Pay the refund from an account instead");
+      }
+      await tx.sale.update({ where: { id: sale.id }, data: { dueAmount: { decrement: refundAmount } } });
       await tx.customer.update({
         where: { id: sale.customerId },
         data: { outstanding: { decrement: refundAmount } },

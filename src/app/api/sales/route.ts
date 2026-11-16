@@ -32,6 +32,7 @@ export async function POST(request: Request) {
       ...payload,
       branchId: auth.user.branchId!,
       userId: auth.user.id,
+      userRole: auth.user.role,
     });
 
     return ok(sale, 201);

@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { resolveBranchId } from "@/lib/branch";
 import { can } from "@/lib/rbac";
 
 export async function requireApiAuth(permission?: string) {
@@ -12,5 +13,7 @@ export async function requireApiAuth(permission?: string) {
     return { ok: false as const, status: 403, message: "Forbidden" };
   }
 
-  return { ok: true as const, user: session.user };
+  // `branchId` is the branch being worked in, which for an admin may differ from their home branch.
+  const branchId = await resolveBranchId(session.user);
+  return { ok: true as const, user: { ...session.user, branchId } };
 }

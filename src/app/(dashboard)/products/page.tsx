@@ -1,62 +1,150 @@
+import { AlertTriangle, Boxes, Package, PackageX } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { Card } from "@/components/ui/card";
-import Image from "next/image";
-import { ProductCreateForm } from "./product-create-form";
+import { getSessionContext } from "@/lib/session";
+import { formatMoney, formatQty, toNumber } from "@/lib/format";
+import { Badge } from "@/components/ui/badge";
+import { TableCard } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatCard } from "@/components/ui/stat-card";
+import { TableSearch } from "@/components/ui/table-search";
 import { BarcodePrintButton } from "./barcode-print-button";
+import { ProductForm } from "./product-form";
+import { ProductImport, StockTransfer } from "./product-tools";
+import { StockAdjust } from "./stock-adjust";
+import { getTr } from "@/lib/i18n-server";
 
 export default async function ProductsPage() {
-  const branch = await prisma.branch.findFirst({ where: { isDefault: true } });
-  const [products, units] = branch
+  const tr = await getTr();
+  const { user, branchId } = await getSessionContext();
+  const [products, units, categoryRows, suppliers, otherBranches] = branchId
     ? await Promise.all([
         prisma.product.findMany({
-        where: { branchId: branch.id },
-        include: { baseUnit: true, supplier: true, category: true },
-        orderBy: { createdAt: "desc" },
+          where: { branchId },
+          include: { baseUnit: true, category: true, unitConversions: { include: { fromUnit: { select: { code: true } } } } },
+          orderBy: { name: "asc" },
         }),
-        prisma.unit.findMany({ orderBy: { name: "asc" } }),
+        prisma.unit.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, code: true } }),
+        prisma.category.findMany({ where: { branchId }, orderBy: { name: "asc" }, select: { name: true } }),
+        prisma.supplier.findMany({ where: { branchId, isActive: true }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
+        prisma.branch.findMany({ where: { isActive: true, id: { not: branchId } }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
       ])
-    : [[], []];
+    : [[], [], [], [], []];
+  const categories = categoryRows.map((c) => c.name);
+  const canTransfer = user?.role === "ADMIN" && otherBranches.length > 0;
+  const addProduct = <ProductForm units={units} categories={categories} suppliers={suppliers} />;
+
+  const rows = products.map((p) => {
+    const stock = toNumber(p.stockQty);
+    const state = !p.isActive ? "inactive" : stock <= 0 ? "out" : stock <= toNumber(p.minStock) ? "low" : "ok";
+    return { p, stock, state };
+  });
+  const stockValue = rows.reduce((sum, { p, stock }) => sum + stock * toNumber(p.weightedAverageCost), 0);
+  const count = (state: string) => rows.filter((row) => row.state === state).length;
 
   return (
-    <Card>
-      <h2 className="text-lg font-bold">Products</h2>
-      <ProductCreateForm units={units} />
-      <div className="mt-4 overflow-x-auto">
-        <table className="min-w-full text-sm">
-          <thead>
-            <tr className="border-b bg-zinc-50 text-left">
-              <th className="px-3 py-2">SKU</th>
-              <th className="px-3 py-2">Barcode</th>
-              <th className="px-3 py-2">Name</th>
-              <th className="px-3 py-2">Category</th>
-              <th className="px-3 py-2">Unit</th>
-              <th className="px-3 py-2">Stock</th>
-              <th className="px-3 py-2">Retail</th>
-              <th className="px-3 py-2">Wholesale</th>
-              <th className="px-3 py-2">Label</th>
-            </tr>
-          </thead>
-          <tbody>
-            {products.map((p) => (
-              <tr key={p.id} className="border-b">
-                <td className="px-3 py-2">{p.sku}</td>
-                <td className="px-3 py-2">
-                  <Image src={`/api/products/barcode?value=${encodeURIComponent(p.barcode ?? p.sku)}`} alt={`Barcode for ${p.name}`} width={128} height={48} unoptimized className="h-12 w-32 object-contain" />
-                </td>
-                <td className="px-3 py-2">{p.name}</td>
-                <td className="px-3 py-2">{p.category?.name ?? "-"}</td>
-                <td className="px-3 py-2">{p.baseUnit.name}</td>
-                <td className="px-3 py-2">{Number(p.stockQty)}</td>
-                <td className="px-3 py-2">৳{Number(p.retailPrice).toFixed(2)}</td>
-                <td className="px-3 py-2">৳{Number(p.wholesalePrice).toFixed(2)}</td>
-                <td className="px-3 py-2">
-                  <BarcodePrintButton name={p.name} sku={p.sku} barcode={p.barcode ?? p.sku} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <div>
+      <PageHeader title={tr("Products")} description={tr("Your catalogue, prices and stock levels.")} actions={
+          <>
+            <ProductImport />
+            {addProduct}
+          </>
+        }
+      />
+
+      <div className="mb-4 grid grid-cols-2 gap-3 xl:grid-cols-4">
+        <StatCard label={tr("Products")} value={`${products.length}`} icon={Package} />
+        <StatCard label={tr("Stock value")} value={formatMoney(stockValue)} hint={tr("At average cost")} icon={Boxes} tone="neutral" />
+        <StatCard label={tr("Low stock")} value={`${count("low")}`} icon={AlertTriangle} tone="amber" />
+        <StatCard label={tr("Out of stock")} value={`${count("out")}`} icon={PackageX} tone="red" />
       </div>
-    </Card>
+
+      {products.length === 0 ? (
+        <TableCard>
+          <EmptyState
+            icon={Package}
+            title={tr("No products yet")}
+            description={tr("Add your first product with its price and opening stock. It will show up in the POS straight away.")}
+            action={addProduct}
+          />
+        </TableCard>
+      ) : (
+        <TableSearch
+          placeholder={tr("Search name, SKU or category")}
+          filters={[
+            { label: tr("Low stock"), value: "low" },
+            { label: tr("Out of stock"), value: "out" },
+            { label: tr("Hidden"), value: "inactive" },
+          ]}
+        >
+          <TableCard>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>{tr("Product")}</th>
+                  <th>{tr("Category")}</th>
+                  <th className="num">{tr("In stock")}</th>
+                  <th className="num">{tr("Cost")}</th>
+                  <th className="num">{tr("Retail")}</th>
+                  <th className="num">{tr("Wholesale")}</th>
+                  <th className="num">{tr("Actions")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map(({ p, stock, state }) => (
+                  <tr key={p.id} data-tags={state}>
+                    <td>
+                      <p className="font-semibold text-zinc-900">{p.name}</p>
+                      <p className="text-xs text-zinc-500">
+                        {p.sku}
+                        {p.unitConversions.map((c) => ` · 1 ${c.fromUnit.code} = ${formatQty(c.factor)} ${p.baseUnit.code}`).join("")}
+                      </p>
+                    </td>
+                    <td className="text-zinc-600">{p.category?.name ?? "-"}</td>
+                    <td className="num">
+                      <span className="font-semibold">
+                        {formatQty(stock)} {p.baseUnit.code}
+                      </span>{" "}
+                      {state === "out" ? <Badge tone="red">{tr("Out")}</Badge> : state === "low" ? <Badge tone="amber">{tr("Low")}</Badge> : state === "inactive" ? <Badge>{tr("Hidden")}</Badge> : null}
+                    </td>
+                    <td className="num text-zinc-600">{formatMoney(p.weightedAverageCost)}</td>
+                    <td className="num font-semibold">{formatMoney(p.retailPrice)}</td>
+                    <td className="num text-zinc-600">{formatMoney(p.wholesalePrice)}</td>
+                    <td>
+                      <div className="flex justify-end gap-1.5">
+                        <StockAdjust productId={p.id} name={p.name} stockQty={stock} unit={p.baseUnit.code} />
+                        {canTransfer ? <StockTransfer productId={p.id} name={p.name} stockQty={stock} unit={p.baseUnit.code} branches={otherBranches} /> : null}
+                        <ProductForm
+                          units={units}
+                          categories={categories}
+                          suppliers={suppliers}
+                          product={{
+                            supplierId: p.supplierId ?? "",
+                            baseUnitId: p.baseUnitId,
+                            conversions: p.unitConversions.map((c) => ({ unitId: c.fromUnitId, factor: toNumber(c.factor) })),
+                            id: p.id,
+                            name: p.name,
+                            sku: p.sku,
+                            barcode: p.barcode ?? p.sku,
+                            categoryName: p.category?.name ?? "",
+                            purchasePrice: toNumber(p.purchasePrice),
+                            retailPrice: toNumber(p.retailPrice),
+                            wholesalePrice: toNumber(p.wholesalePrice),
+                            minSellingPrice: toNumber(p.minSellingPrice),
+                            minStock: toNumber(p.minStock),
+                            isActive: p.isActive,
+                          }}
+                        />
+                        <BarcodePrintButton name={p.name} sku={p.sku} barcode={p.barcode ?? p.sku} />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </TableCard>
+        </TableSearch>
+      )}
+    </div>
   );
 }

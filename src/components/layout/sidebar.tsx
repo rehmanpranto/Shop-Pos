@@ -2,77 +2,68 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Boxes,
-  ClipboardList,
-  HandCoins,
-  LayoutDashboard,
-  Package,
-  Receipt,
-  ScanLine,
-  Settings,
-  ShoppingCart,
-  Truck,
-  Users,
-  Warehouse,
-  FileText,
-  Activity,
-  Building2,
-} from "lucide-react";
+import { Store, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useApp } from "./app-context";
+import { navForRole } from "./nav";
+import { useTr } from "@/components/layout/language";
 
-const menu = [
-  ["Dashboard", "/dashboard", LayoutDashboard],
-  ["Sales", "/sales", Receipt],
-  ["POS", "/pos", ScanLine],
-  ["Invoices", "/sales", FileText],
-  ["Customers", "/customers", Users],
-  ["Purchases", "/purchases", ShoppingCart],
-  ["Suppliers", "/suppliers", Building2],
-  ["Inventory", "/inventory", Warehouse],
-  ["Products", "/products", Package],
-  ["Quotations", "/quotations", ClipboardList],
-  ["Deliveries", "/deliveries", Truck],
-  ["Expenses", "/expenses", Boxes],
-  ["Payments", "/payments", HandCoins],
-  ["Reports", "/reports", Activity],
-  ["Users", "/users", Users],
-  ["Settings", "/settings", Settings],
-  ["Audit Logs", "/audit-logs", FileText],
-] as const;
-
-export function Sidebar() {
+export function Sidebar({ businessName, branchName, open, onClose }: { businessName: string; branchName: string | null; open: boolean; onClose: () => void }) {
+  const tr = useTr();
   const pathname = usePathname();
+  const { user, t } = useApp();
+  const groups = navForRole(user.role);
 
   return (
-    <aside className="sticky top-0 z-20 w-full shrink-0 border-b border-zinc-200 bg-gradient-to-b from-[#f8f7f2] via-[#faf9f7] to-white md:relative md:h-screen md:w-72 md:border-b-0 md:border-r">
-      <div className="p-2 md:sticky md:top-0 md:h-screen md:overflow-y-auto md:p-4">
-        <div className="mb-2 rounded-xl bg-zinc-900 p-3 text-zinc-100 md:mb-5 md:p-4">
-          <p className="text-xs uppercase tracking-[0.2em] text-zinc-400">Hardware ERP + POS</p>
-          <p className="mt-1 text-lg font-bold">Operations Console</p>
+    <>
+      {open ? <button type="button" aria-label={tr("Close menu")} onClick={onClose} className="fixed inset-0 z-30 bg-zinc-900/50 md:hidden" /> : null}
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-40 flex w-64 shrink-0 flex-col bg-sidebar text-slate-300 transition-transform duration-200 md:sticky md:top-0 md:h-screen md:translate-x-0",
+          open ? "translate-x-0" : "-translate-x-full",
+        )}
+      >
+        <div className="flex items-start gap-3 px-4 py-4">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-accent text-zinc-900">
+            <Store className="h-5 w-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="line-clamp-2 text-sm font-bold leading-tight text-white">{businessName}</p>
+            {branchName ? <p className="truncate text-xs text-slate-400">{branchName}</p> : null}
+          </div>
+          <button type="button" onClick={onClose} aria-label={tr("Close menu")} className="rounded-lg p-1.5 text-slate-400 hover:bg-white/10 hover:text-white md:hidden">
+            <X className="h-5 w-5" />
+          </button>
         </div>
 
-        <nav className="flex gap-1 overflow-x-auto pb-1 md:block md:space-y-1 md:overflow-visible">
-          {menu.map(([title, href, Icon]) => {
-            const active = pathname === href || pathname.startsWith(`${href}/`);
-            return (
-              <Link
-                key={`${href}-${title}`}
-                href={href}
-                className={cn(
-                  "flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition md:gap-3",
-                  active
-                    ? "bg-zinc-900 text-white"
-                    : "text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900",
-                )}
-              >
-                <Icon className="h-4 w-4" />
-                {title}
-              </Link>
-            );
-          })}
+        <nav className="flex-1 space-y-4 overflow-y-auto px-3 pb-4" aria-label={tr("Main")}>
+          {groups.map((group) => (
+            <div key={group.label}>
+              <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">{t(group.key)}</p>
+              <div className="space-y-0.5">
+                {group.items.map(({ key, href, icon: Icon }) => {
+                  const active = pathname === href || pathname.startsWith(`${href}/`);
+                  return (
+                    <Link
+                      key={href}
+                      href={href}
+                      onClick={onClose}
+                      aria-current={active ? "page" : undefined}
+                      className={cn(
+                        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition",
+                        active ? "bg-white/10 text-white" : "hover:bg-white/5 hover:text-white",
+                      )}
+                    >
+                      <Icon className={cn("h-4 w-4 shrink-0", active ? "text-brand-accent" : "text-slate-400")} />
+                      {t(key)}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 }

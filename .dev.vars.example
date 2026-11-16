@@ -1,0 +1,6 @@
+# Used only when previewing the Cloudflare build on your own computer (npm run preview).
+# Copy to .dev.vars and fill in. On Cloudflare itself, set these as Secrets in the dashboard.
+NEXTJS_ENV=development
+DATABASE_URL="postgresql://USER:PASSWORD@HOST/DATABASE?sslmode=require"
+NEXTAUTH_SECRET=""
+BOOTSTRAP_SETUP_KEY=""
