@@ -9,9 +9,8 @@ import { can } from "@/lib/rbac";
 
 export const authOptions: AuthOptions = {
   // Key that signs the session cookie. Either name works: NEXTAUTH_SECRET or AUTH_SECRET.
-  get secret() {
-    return process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET;
-  },
+  // A plain property, not a getter: when it is empty NextAuth writes its own fallback here.
+  secret: process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET,
   session: { strategy: "jwt" },
   providers: [
     CredentialsProvider({

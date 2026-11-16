@@ -195,6 +195,8 @@ src/
   server/services/     business rules: sales, purchases, refunds, inventory, ledger, closing
   lib/                 database client, sign-in, roles, validation, formatting, invoice PDF
   components/          layout (sidebar, top bar, quick search) and shared UI parts
+scripts/check-env.mjs  stops a Vercel build when a required setting is missing
+vercel.json            Vercel configuration (framework and region)
 ```
 
 ## Run it on your computer
@@ -264,13 +266,14 @@ Useful commands:
 Good to know:
 
 - Secrets cannot be stored in the repository, so step 2 has to be done by hand.
+  If one is missing, the build stops and names it (`scripts/check-env.mjs`).
+- `vercel.json` runs the app in Singapore (`sin1`), next to the Neon database.
+  Change it there if the database moves.
 - `NEXTAUTH_URL` is not needed on Vercel; sign-in works on whatever address the
   app is served from, including preview addresses.
 - Deploying does not change the database. After adding a migration, apply it with
   `npm run db:deploy` from your computer, with `DATABASE_URL` pointing at the
   live database.
-- For speed, set the function region (**Settings → Functions**) to the one
-  closest to the Neon database.
 
 The app also runs on any host that supports Next.js (`npm run build`, `npm start`).
 
