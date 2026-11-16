@@ -1,11 +1,12 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { fail, ok } from "@/lib/response";
 import { requireApiAuth } from "@/lib/api-auth";
 import { z } from "zod";
 
 const schema = z.object({
-  supplierCode: z.string(),
-  name: z.string(),
+  supplierCode: z.string().trim().min(1),
+  name: z.string().trim().min(1),
   company: z.string().optional(),
   phone: z.string().optional(),
   email: z.string().optional(),
@@ -35,13 +36,47 @@ export async function POST(request: Request) {
 
   try {
     const payload = schema.parse(await request.json());
-    const item = await prisma.supplier.create({
-      data: {
-        ...payload,
-        branchId: auth.user.branchId!,
+    const branchId = auth.user.branchId!;
+    const existing = await prisma.supplier.findUnique({
+      where: {
+        branchId_supplierCode: {
+          branchId,
+          supplierCode: payload.supplierCode,
+        },
       },
     });
-    return ok(item, 201);
+
+    let created = false;
+    let item = existing;
+
+    if (!item) {
+      try {
+        item = await prisma.supplier.create({
+          data: {
+            ...payload,
+            branchId,
+          },
+        });
+        created = true;
+      } catch (error) {
+        if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== "P2002") {
+          throw error;
+        }
+
+        item = await prisma.supplier.findUnique({
+          where: {
+            branchId_supplierCode: {
+              branchId,
+              supplierCode: payload.supplierCode,
+            },
+          },
+        });
+
+        if (!item) throw error;
+      }
+    }
+
+    return ok(item, created ? 201 : 200);
   } catch (error) {
     return fail("Failed to create supplier", 400, `${error}`);
   }
