@@ -15,7 +15,7 @@ day closing, reports) in one place, on desktop and on a phone.
 - [Tech stack](#tech-stack)
 - [Project structure](#project-structure)
 - [Run it on your computer](#run-it-on-your-computer)
-- [Deploy to Cloudflare](#deploy-to-cloudflare)
+- [Deploy to Vercel](#deploy-to-vercel)
 - [Staff roles](#staff-roles)
 
 ## Features
@@ -83,14 +83,14 @@ inside one database transaction.
 flowchart TD
     Browser["Browser<br/>desktop or phone"]
 
-    subgraph Worker["Cloudflare Worker (Next.js via OpenNext)"]
+    subgraph App["Next.js app on Vercel"]
         Proxy["proxy.ts<br/>sign-in and role check for every page"]
         Pages["Pages<br/>dashboard, POS, products, reports ..."]
         API["API routes<br/>/api/sales, /api/purchases, /api/refunds ..."]
         Auth["NextAuth<br/>email + password, session cookie"]
         Services["Services<br/>sales, purchases, refunds,<br/>inventory, ledger, closing"]
         PDF["Invoice PDF<br/>pdf-lib"]
-        Prisma["Prisma client<br/>one connection per request"]
+        Prisma["Prisma client<br/>pooled connections"]
     end
 
     DB[("Neon Postgres")]
@@ -176,7 +176,7 @@ The full schema, including quotations, deliveries, cheques and settings, is in
 | Validation | Zod |
 | Invoice PDF | pdf-lib |
 | Barcodes | bwip-js |
-| Hosting | Cloudflare Workers through OpenNext |
+| Hosting | Vercel |
 
 ## Project structure
 
@@ -195,8 +195,6 @@ src/
   server/services/     business rules: sales, purchases, refunds, inventory, ledger, closing
   lib/                 database client, sign-in, roles, validation, formatting, invoice PDF
   components/          layout (sidebar, top bar, quick search) and shared UI parts
-wrangler.jsonc         Cloudflare configuration
-open-next.config.ts    Cloudflare adapter configuration
 ```
 
 ## Run it on your computer
@@ -243,36 +241,38 @@ Useful commands:
 | Command | What it does |
 | --- | --- |
 | `npm run dev` | start the app for development |
-| `npm run build` | build the app for Cloudflare |
-| `npm run build:next` then `npm start` | run the production build on a normal server |
+| `npm run build` then `npm start` | build the app and run the production build |
 | `npm run lint` | check the code |
-| `npm run preview` | run the Cloudflare build on your computer |
 | `npm run db:migrate` | create a new database migration |
 
-## Deploy to Cloudflare
+## Deploy to Vercel
 
-1. In the Cloudflare dashboard go to **Workers & Pages → Create → Import a
-   repository** and pick this repository. Keep the project name `shop-pos`.
-2. Leave the build settings as Cloudflare fills them in:
-   - Build command: `npm run build`
-   - Deploy command: `npx wrangler deploy`
-3. Under **Settings → Variables and Secrets** add these, each as type
-   **Secret**, then redeploy:
-   - `DATABASE_URL`
-   - `NEXTAUTH_SECRET`
-   - `BOOTSTRAP_SETUP_KEY`
+1. In the Vercel dashboard choose **Add New → Project** and import this
+   repository. Vercel recognises Next.js, so leave the build settings as they are
+   (build command `npm run build`, install command `npm install`).
+2. Before the first deploy, open **Environment Variables** and add:
+
+   | Variable | Value |
+   | --- | --- |
+   | `DATABASE_URL` | Neon **pooled** connection string (the host name contains `-pooler`) |
+   | `NEXTAUTH_SECRET` | a long random string (`openssl rand -base64 32`) |
+   | `BOOTSTRAP_SETUP_KEY` | another long random string |
+   | `SMTP_*` | optional, only for emailing invoices |
+
+3. Press **Deploy**. Every later push to the production branch deploys again.
 
 Good to know:
 
-- Secrets cannot be stored in the repository, so step 3 has to be done by hand.
-- `NEXTAUTH_URL` is not needed on Cloudflare; sign-in works on whatever address
-  the app is served from.
-- The Workers **Paid** plan is required. The compressed app is about 3.8 MB
-  (the free plan allows 3 MB), and checking a password needs more processing
-  time than the free plan's 10 ms per request.
-- Invoice email uses SMTP and has not been tested on Cloudflare.
+- Secrets cannot be stored in the repository, so step 2 has to be done by hand.
+- `NEXTAUTH_URL` is not needed on Vercel; sign-in works on whatever address the
+  app is served from, including preview addresses.
+- Deploying does not change the database. After adding a migration, apply it with
+  `npm run db:deploy` from your computer, with `DATABASE_URL` pointing at the
+  live database.
+- For speed, set the function region (**Settings → Functions**) to the one
+  closest to the Neon database.
 
-The app also runs on any host that supports Next.js (`npm run build:next`, `npm start`).
+The app also runs on any host that supports Next.js (`npm run build`, `npm start`).
 
 ## Staff roles
 
