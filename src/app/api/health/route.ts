@@ -1,5 +1,10 @@
-import { ok } from "@/lib/response";
+import { prisma } from "@/lib/prisma";
 
 export async function GET() {
-  return ok({ status: "ok", service: "hardware-erp-pos" });
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    return Response.json({ success: true, data: { status: "ok", service: "hardware-erp-pos", database: "ok" } });
+  } catch {
+    return Response.json({ success: false, error: { message: "Database unavailable" } }, { status: 503 });
+  }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, ReactNode, useCallback, useContext, useState } from "react";
+import { createContext, ReactNode, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { CheckCircle2, CircleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -15,12 +15,15 @@ export function useToast() {
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<ToastItem[]>([]);
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const toast = useCallback((message: string, tone: ToastTone = "success") => {
     const id = Date.now() + Math.random();
     setItems((old) => [...old, { id, message, tone }]);
-    setTimeout(() => setItems((old) => old.filter((item) => item.id !== id)), tone === "error" ? 6000 : 3500);
+    timers.current.push(setTimeout(() => setItems((old) => old.filter((item) => item.id !== id)), tone === "error" ? 6000 : 3500));
   }, []);
+
+  useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
   return (
     <ToastContext.Provider value={toast}>

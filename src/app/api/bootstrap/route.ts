@@ -15,8 +15,19 @@ const bootstrapSchema = z.object({
   password: z.string().min(8).default("admin12345"),
 });
 
+const attempts = new Map<string, { count: number; resetAt: number }>();
+
 export async function POST(request: Request) {
   try {
+    const clientKey = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    const now = Date.now();
+    const record = attempts.get(clientKey);
+    if (record && record.resetAt > now && record.count >= 5) {
+      return fail("Too many setup attempts. Try again later.", 429);
+    }
+    if (!record || record.resetAt <= now) attempts.set(clientKey, { count: 1, resetAt: now + 15 * 60 * 1000 });
+    else record.count += 1;
+
     const setupKey = process.env.BOOTSTRAP_SETUP_KEY;
     const parsed = bootstrapSchema.safeParse(await request.json());
 

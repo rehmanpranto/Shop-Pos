@@ -268,6 +268,16 @@ Good to know:
   application traffic.
 - The app also runs on any host that supports Next.js (`npm run build`, `npm start`).
 
+### Production operations checklist
+
+- Rotate the Neon database password before the first production deployment.
+- Use separate Neon branches and Vercel variables for Preview and Production.
+- Configure an uptime monitor against `/api/health`; it returns `503` when the database is unavailable.
+- Configure error tracking (for example Sentry) through the provider dashboard without committing credentials.
+- Enable Neon backups and define a restore test schedule.
+- Protect `main` with required CI checks. The repository workflow runs lint, TypeScript, Prisma validation, and the production build.
+- Review `npm audit` regularly and upgrade dependencies deliberately, testing authentication and invoice email after upgrades.
+
 ## Staff roles
 
 | Role | Can do |
