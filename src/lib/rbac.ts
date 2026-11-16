@@ -15,6 +15,8 @@ export const rolePermissions: Record<UserRole, string[]> = {
     "quotations:*",
     "deliveries:*",
     "products:*",
+    "payments:*",
+    "closing:*",
   ],
   CASHIER: [
     "dashboard:read",
@@ -23,6 +25,14 @@ export const rolePermissions: Record<UserRole, string[]> = {
     "invoices:read",
     "refunds:create",
     "customers:read",
+    "customers:create",
+    "quotations:read",
+    "quotations:create",
+    "deliveries:read",
+    "deliveries:create",
+    "deliveries:update",
+    "closing:read",
+    "closing:create",
     "pos:use",
   ],
   INVENTORY: [
@@ -39,6 +49,9 @@ export const rolePermissions: Record<UserRole, string[]> = {
     "payments:read",
     "expenses:read",
     "reports:read",
+    "customers:read",
+    "suppliers:read",
+    "closing:read",
   ],
 };
 

@@ -1,36 +1,70 @@
 import { prisma } from "@/lib/prisma";
-import { Card } from "@/components/ui/card";
+import { getSessionContext } from "@/lib/session";
+import { formatDate, humanize } from "@/lib/format";
+import { Badge } from "@/components/ui/badge";
+import { TableCard } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
+import { TableSearch } from "@/components/ui/table-search";
 import { UserCreateForm } from "./user-create-form";
+import { UserEditForm } from "./user-edit-form";
 
 export default async function UsersPage() {
-  const users = await prisma.user.findMany({ orderBy: { createdAt: "desc" } });
+  const { user } = await getSessionContext();
+  const [users, branches] = await Promise.all([
+    prisma.user.findMany({ orderBy: { createdAt: "asc" }, include: { branch: { select: { name: true } } } }),
+    prisma.branch.findMany({ where: { isActive: true }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
+  ]);
+  const isAdmin = user?.role === "ADMIN";
 
   return (
-    <Card>
-      <h2 className="text-lg font-bold">Users & Roles</h2>
-      <UserCreateForm />
-      <div className="mt-4 overflow-x-auto">
-        <table className="min-w-full text-sm">
-          <thead>
-            <tr className="border-b bg-zinc-50 text-left">
-              <th className="px-3 py-2">Name</th>
-              <th className="px-3 py-2">Email</th>
-              <th className="px-3 py-2">Role</th>
-              <th className="px-3 py-2">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u) => (
-              <tr key={u.id} className="border-b">
-                <td className="px-3 py-2">{u.name}</td>
-                <td className="px-3 py-2">{u.email}</td>
-                <td className="px-3 py-2">{u.role}</td>
-                <td className="px-3 py-2">{u.isActive ? "Active" : "Disabled"}</td>
+    <div>
+      <PageHeader title="Users" description="Staff who can sign in, and what each role is allowed to do." actions={user?.role === "ADMIN" ? <UserCreateForm /> : null} />
+
+      <TableSearch placeholder="Search name, email or role">
+        <TableCard>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Branch</th>
+                <th>Added</th>
+                <th>Status</th>
+                <th className="num">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </Card>
+            </thead>
+            <tbody>
+              {users.map((u) => (
+                <tr key={u.id}>
+                  <td className="font-semibold text-zinc-900">
+                    {u.name}
+                    {u.id === user?.id ? <span className="ml-2 text-xs font-normal text-zinc-500">(you)</span> : null}
+                  </td>
+                  <td className="text-zinc-600">{u.email}</td>
+                  <td>
+                    <Badge tone={u.role === "ADMIN" ? "blue" : "neutral"}>{humanize(u.role)}</Badge>
+                  </td>
+                  <td className="text-zinc-600">{u.branch?.name ?? "-"}</td>
+                  <td className="text-zinc-600">{formatDate(u.createdAt)}</td>
+                  <td>{u.isActive ? <Badge tone="green">Active</Badge> : <Badge tone="red">Disabled</Badge>}</td>
+                  <td>
+                    <div className="flex justify-end">
+                      {isAdmin ? (
+                        <UserEditForm
+                          user={{ id: u.id, name: u.name, email: u.email, role: u.role, branchId: u.branchId ?? branches[0]?.id ?? "", isActive: u.isActive }}
+                          branches={branches}
+                          isSelf={u.id === user?.id}
+                        />
+                      ) : null}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </TableCard>
+      </TableSearch>
+    </div>
   );
 }

@@ -1,13 +1,13 @@
 import bcrypt from "bcryptjs";
 import { UserRole } from "@prisma/client";
 import { z } from "zod";
-import { DEFAULT_BRANCH_CODE, DEFAULT_BRANCH_NAME, DEFAULT_UNITS } from "@/lib/constants";
+import { DEFAULT_BRANCH_CODE, DEFAULT_BRANCH_NAME, DEFAULT_BUSINESS_NAME, DEFAULT_UNITS } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import { fail, ok } from "@/lib/response";
 
 const bootstrapSchema = z.object({
   setupKey: z.string().min(1),
-  businessName: z.string().trim().min(1).max(160).default("Hardware ERP POS"),
+  businessName: z.string().trim().min(1).max(160).default(DEFAULT_BUSINESS_NAME),
   address: z.string().trim().max(500).optional(),
   phone: z.string().trim().max(40).optional(),
   email: z.string().email().default("admin@example.com"),

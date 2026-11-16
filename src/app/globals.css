@@ -1,12 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f6f5f2;
+  --background: #f5f4f0;
   --foreground: #1b1d20;
   --card: #ffffff;
   --muted: #6b7280;
   --brand: #154c79;
+  --brand-dark: #0f3a5e;
+  --brand-soft: #e8f0f7;
   --brand-accent: #efb11d;
+  --sidebar: #0f2236;
 }
 
 @theme inline {
@@ -15,17 +18,158 @@
   --color-card: var(--card);
   --color-muted: var(--muted);
   --color-brand: var(--brand);
+  --color-brand-dark: var(--brand-dark);
+  --color-brand-soft: var(--brand-soft);
   --color-brand-accent: var(--brand-accent);
-  --font-sans: var(--font-geist-sans);
+  --color-sidebar: var(--sidebar);
+  --font-sans: var(--font-montserrat);
   --font-mono: var(--font-geist-mono);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: var(--font-montserrat), "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
 * {
   scrollbar-width: thin;
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* Shared data table */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+.data-table th {
+  padding: 0.625rem 0.875rem;
+  text-align: left;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #71717a;
+  background: #fafaf8;
+  border-bottom: 1px solid #e4e4e7;
+}
+.data-table td {
+  padding: 0.7rem 0.875rem;
+  border-bottom: 1px solid #f1f1ef;
+  vertical-align: middle;
+}
+.data-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+.data-table tbody tr:hover {
+  background: #fafaf8;
+}
+.data-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.pop-in {
+  animation: pop-in 0.16s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pop-in {
+    animation: none;
+  }
+}
+
+/* Phones: a table inside a TableCard becomes a list of cards, one per row. */
+@media (max-width: 640px) {
+  .table-stack .data-table thead,
+  .table-stack .data-table tfoot {
+    display: none;
+  }
+  .table-stack .data-table,
+  .table-stack .data-table tbody {
+    display: block;
+  }
+  /* Each row is a two-column card: label above value. */
+  .table-stack .data-table tbody tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem 1rem;
+    padding: 0.875rem;
+    border-bottom: 1px solid #ececea;
+  }
+  .table-stack .data-table tbody tr:last-child {
+    border-bottom: 0;
+  }
+  .table-stack .data-table td,
+  .table-stack .data-table td.num {
+    display: block;
+    min-width: 0;
+    max-width: none;
+    padding: 0;
+    border: 0;
+    text-align: left;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .table-stack .data-table td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 0.1rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #71717a;
+  }
+  /* The first cell names the row, so it spans the card as its title. Actions span the bottom. */
+  .table-stack .data-table td:first-child,
+  .table-stack .data-table td[data-label="Actions"] {
+    grid-column: 1 / -1;
+  }
+  .table-stack .data-table td:first-child::before,
+  .table-stack .data-table td[data-label="Actions"]::before,
+  .table-stack .data-table td[data-label=""]::before {
+    display: none;
+  }
+  .table-stack .data-table td[data-label="Actions"] > div {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+  .table-stack .data-table td[data-empty] {
+    display: none;
+  }
+
+  /* 16px text stops iPhones from zooming the page when a field is tapped. */
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+@media print {
+  body {
+    background: #fff;
+  }
 }

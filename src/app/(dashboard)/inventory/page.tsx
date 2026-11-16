@@ -1,55 +1,84 @@
+import { Warehouse } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { Card } from "@/components/ui/card";
+import { getSessionContext } from "@/lib/session";
+import { formatDateTime, formatQty, humanize } from "@/lib/format";
+import { StatusBadge } from "@/components/ui/badge";
+import { TableCard } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
+import { TableSearch } from "@/components/ui/table-search";
 
 export default async function InventoryPage() {
-  const branch = await prisma.branch.findFirst({ where: { isDefault: true } });
-  const logs = branch
+  const { branchId } = await getSessionContext();
+  const logs = branchId
     ? await prisma.inventoryTransaction.findMany({
-        where: { branchId: branch.id },
-        include: { product: true, unit: true, createdBy: true },
+        where: { branchId },
+        include: { product: { select: { name: true } }, unit: { select: { code: true } }, createdBy: { select: { name: true } } },
         orderBy: { createdAt: "desc" },
-        take: 200,
+        take: 300,
       })
     : [];
 
   return (
-    <Card>
-      <h2 className="text-lg font-bold">Inventory Ledger</h2>
-      <p className="mt-1 text-sm text-zinc-600">Every stock movement is preserved for audit and traceability.</p>
-      <div className="mt-4 overflow-x-auto">
-        <table className="min-w-full text-xs md:text-sm">
-          <thead>
-            <tr className="border-b bg-zinc-50 text-left">
-              <th className="px-3 py-2">Date</th>
-              <th className="px-3 py-2">Product</th>
-              <th className="px-3 py-2">Qty</th>
-              <th className="px-3 py-2">Unit</th>
-              <th className="px-3 py-2">Type</th>
-              <th className="px-3 py-2">Reason</th>
-              <th className="px-3 py-2">Reference</th>
-              <th className="px-3 py-2">Previous</th>
-              <th className="px-3 py-2">New</th>
-              <th className="px-3 py-2">User</th>
-            </tr>
-          </thead>
-          <tbody>
-            {logs.map((log) => (
-              <tr key={log.id} className="border-b">
-                <td className="px-3 py-2">{new Date(log.createdAt).toLocaleString()}</td>
-                <td className="px-3 py-2">{log.product.name}</td>
-                <td className="px-3 py-2">{Number(log.qty)}</td>
-                <td className="px-3 py-2">{log.unit.code}</td>
-                <td className="px-3 py-2">{log.movementType}</td>
-                <td className="px-3 py-2">{log.reason}</td>
-                <td className="px-3 py-2">{log.referenceNo}</td>
-                <td className="px-3 py-2">{Number(log.previousStock)}</td>
-                <td className="px-3 py-2">{Number(log.newStock)}</td>
-                <td className="px-3 py-2">{log.createdBy.name}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </Card>
+    <div>
+      <PageHeader title="Inventory ledger" description="Every stock movement, newest first. To change stock, use Adjust on the Products page or record a purchase." />
+
+      {logs.length === 0 ? (
+        <TableCard>
+          <EmptyState icon={Warehouse} title="No stock movements yet" description="Sales, purchases, refunds and adjustments will be listed here." />
+        </TableCard>
+      ) : (
+        <TableSearch
+          placeholder="Search product, reference or user"
+          filters={[
+            { label: "In", value: "STOCK_IN" },
+            { label: "Out", value: "STOCK_OUT" },
+            { label: "Returned", value: "STOCK_RETURN" },
+          ]}
+        >
+          <TableCard>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Product</th>
+                  <th>Movement</th>
+                  <th>Reason</th>
+                  <th>Reference</th>
+                  <th className="num">Change</th>
+                  <th className="num">Stock after</th>
+                  <th>By</th>
+                </tr>
+              </thead>
+              <tbody>
+                {logs.map((log) => {
+                  const out = log.movementType === "STOCK_OUT";
+                  return (
+                    <tr key={log.id} data-tags={log.movementType}>
+                      <td className="whitespace-nowrap text-zinc-600">{formatDateTime(log.createdAt)}</td>
+                      <td className="font-semibold text-zinc-900">{log.product.name}</td>
+                      <td>
+                        <StatusBadge status={log.movementType} />
+                      </td>
+                      <td className="text-zinc-600">
+                        {humanize(log.reason)}
+                        {log.note ? <span className="block text-xs text-zinc-500">{log.note}</span> : null}
+                      </td>
+                      <td className="text-zinc-600">{log.referenceNo}</td>
+                      <td className={`num font-semibold ${out ? "text-red-700" : "text-emerald-700"}`}>
+                        {out ? "-" : "+"}
+                        {formatQty(log.qty)} {log.unit.code}
+                      </td>
+                      <td className="num">{formatQty(log.newStock)}</td>
+                      <td className="text-zinc-600">{log.createdBy.name}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </TableCard>
+        </TableSearch>
+      )}
+    </div>
   );
 }

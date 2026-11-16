@@ -43,10 +43,21 @@ export const authOptions: AuthOptions = {
       if (user) {
         token.role = user.role;
         token.branchId = user.branchId;
+        token.checkedAt = Date.now();
+        return token;
+      }
+      // Re-read the account every few minutes so a role change or a disabled account takes effect quickly.
+      if (token.sub && Date.now() - ((token.checkedAt as number | undefined) ?? 0) > 5 * 60 * 1000) {
+        const current = await prisma.user.findUnique({ where: { id: token.sub }, select: { role: true, branchId: true, isActive: true } });
+        if (!current?.isActive) return {};
+        token.role = current.role;
+        token.branchId = current.branchId;
+        token.checkedAt = Date.now();
       }
       return token;
     },
     async session({ session, token }) {
+      if (!token.sub) return { ...session, user: undefined as never };
       if (session.user) {
         session.user.id = token.sub as string;
         session.user.role = (token.role as UserRole) ?? UserRole.CASHIER;

@@ -1,3 +1,4 @@
+export const DEFAULT_BUSINESS_NAME = "Rahman Hardware, Sanitary and Electronic";
 export const DEFAULT_BRANCH_CODE = "MAIN";
 export const DEFAULT_BRANCH_NAME = "Main Branch";
 

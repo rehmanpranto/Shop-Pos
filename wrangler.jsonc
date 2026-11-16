@@ -1,0 +1,31 @@
+// Cloudflare Workers configuration for the shop app (built with OpenNext).
+// Secrets are NOT stored here. Add DATABASE_URL, NEXTAUTH_SECRET and BOOTSTRAP_SETUP_KEY
+// in the Cloudflare dashboard under Settings > Variables and Secrets (type: Secret).
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "shop-pos",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      // Must match "name" above.
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "shop-pos"
+    }
+  ],
+  "vars": {
+    // Lets sign-in work on whatever address the app is served from
+    // (the workers.dev address or your own domain) without setting NEXTAUTH_URL.
+    "AUTH_TRUST_HOST": "true"
+  },
+  // Keep variables added in the dashboard when a new version is deployed.
+  "keep_vars": true,
+  "observability": {
+    "enabled": true
+  }
+}

@@ -49,6 +49,36 @@ Optional email variables are `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`,
 `SMTP_PASSWORD`, and `SMTP_FROM`. After the first administrator is created,
 rotate or remove `BOOTSTRAP_SETUP_KEY`.
 
+## Cloudflare deployment
+
+The app runs on Cloudflare Workers through the OpenNext adapter. The files
+`wrangler.jsonc` and `open-next.config.ts` hold the configuration.
+
+1. In the Cloudflare dashboard go to **Workers & Pages → Create → Import a
+   repository** and pick this repository. Keep the project name `shop-pos`
+   (it must match `name` in `wrangler.jsonc`).
+2. Set the build settings:
+   - Build command: `npx opennextjs-cloudflare build`
+   - Deploy command: `npx opennextjs-cloudflare deploy`
+3. Under **Settings → Variables and Secrets** add these, each as type
+   **Secret**. Add them under **Build → Variables and secrets** as well, so the
+   build can read them:
+   - `DATABASE_URL` — Neon pooled connection string
+   - `NEXTAUTH_SECRET` — a long random secret
+   - `BOOTSTRAP_SETUP_KEY` — a separate random setup key
+4. Deploy. `NEXTAUTH_URL` is not needed; sign-in works on whatever address the
+   app is served from.
+
+The Workers **Paid** plan is required: the compressed app is about 3.8 MB
+(the free plan allows 3 MB) and checking a password needs more processing time
+than the free plan's 10 ms per request.
+
+To try the Cloudflare build on your own computer, copy `.dev.vars.example` to
+`.dev.vars`, fill it in, and run `npm run preview`. `npm run deploy` builds and
+deploys from your computer instead of from GitHub.
+
+Invoice email uses SMTP and has not been tested on Cloudflare.
+
 ## Development
 
 ```bash
