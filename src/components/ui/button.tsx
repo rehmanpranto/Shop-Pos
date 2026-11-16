@@ -18,7 +18,7 @@ const sizes = {
 
 export function buttonClass(variant: keyof typeof variants = "primary", size: keyof typeof sizes = "md", className?: string) {
   return cn(
-    "inline-flex shrink-0 items-center justify-center rounded-lg font-semibold transition disabled:cursor-not-allowed disabled:opacity-50",
+    "inline-flex shrink-0 items-center justify-center rounded-lg font-semibold transition duration-150 ease-out hover:-translate-y-px active:translate-y-0 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0",
     variants[variant],
     sizes[size],
     className,

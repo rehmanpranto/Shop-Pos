@@ -8,8 +8,7 @@ import { fail } from "@/lib/response";
 import { can } from "@/lib/rbac";
 
 export const authOptions: AuthOptions = {
-  // Key that signs the session cookie. Either name works; Cloudflare setups often use AUTH_SECRET.
-  // Read on each use: on Cloudflare, settings are not available yet when this file first loads.
+  // Read on each use so deployment-provided environment variables are available.
   get secret() {
     return process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET;
   },

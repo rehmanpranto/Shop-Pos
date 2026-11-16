@@ -1,7 +1,5 @@
 generator client {
   provider        = "prisma-client-js"
-  // Lets the app talk to Postgres through a JavaScript driver, which Cloudflare Workers require.
-  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {

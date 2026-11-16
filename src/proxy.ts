@@ -14,7 +14,6 @@ function sessionCookieName(request: NextRequest) {
 // Signed-out visitors go to /login. Signed-in staff who open a page their role
 // is not allowed to use are sent to their own start page instead.
 export default function proxy(request: NextRequest, event: NextFetchEvent) {
-  // Built per request: on Cloudflare the secret is not available yet when this file first loads.
   const guarded = withAuth(
     (authed) => {
       const role = authed.nextauth.token?.role as Role | undefined;

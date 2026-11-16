@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { Check, GitBranch, KeyRound, Languages, LogOut, Menu, ScanLine, Search } from "lucide-react";
+import { Check, GitBranch, KeyRound, Languages, Loader2, LogOut, Menu, ScanLine, Search } from "lucide-react";
 import { sendJson } from "@/lib/client-api";
 import { humanize } from "@/lib/format";
 import { canOpen } from "@/lib/page-access";
@@ -32,6 +32,7 @@ export function Topbar({
   const { user, language, setLanguage, t } = useApp();
   const current = findNavItem(pathname);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isSwitchingBranch, startBranchTransition] = useTransition();
   const menuRef = useRef<HTMLDivElement>(null);
   const canSell = canOpen(user.role, "/pos");
 
@@ -53,8 +54,10 @@ export function Topbar({
 
   async function switchBranch(branchId: string) {
     setMenuOpen(false);
-    const result = await sendJson("/api/branches/switch", { branchId });
-    if (result.ok) router.refresh();
+    startBranchTransition(async () => {
+      const result = await sendJson("/api/branches/switch", { branchId });
+      if (result.ok) router.refresh();
+    });
   }
 
   const initials = user.name
@@ -123,9 +126,9 @@ export function Topbar({
                   <p className="flex items-center gap-1.5 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
                     <GitBranch className="h-3 w-3" />{tr("Working in")}</p>
                   {branches.map((branch) => (
-                    <button key={branch.id} type="button" role="menuitem" onClick={() => switchBranch(branch.id)} className={itemClass}>
+                    <button key={branch.id} type="button" role="menuitem" disabled={isSwitchingBranch} onClick={() => switchBranch(branch.id)} className={itemClass}>
                       <span className="min-w-0 flex-1 truncate">{branch.name}</span>
-                      {branch.id === activeBranchId ? <Check className="h-4 w-4 text-brand" /> : null}
+                      {isSwitchingBranch && branch.id !== activeBranchId ? <Loader2 className="h-4 w-4 animate-spin text-brand" /> : branch.id === activeBranchId ? <Check className="h-4 w-4 text-brand" /> : null}
                     </button>
                   ))}
                 </div>

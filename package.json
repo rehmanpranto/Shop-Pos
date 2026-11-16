@@ -4,22 +4,16 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "opennextjs-cloudflare build",
-    "build:next": "next build",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
-    "db:seed": "tsx prisma/seed.ts",
-    "preview": "npm run build && opennextjs-cloudflare preview",
-    "deploy": "npm run build && opennextjs-cloudflare deploy",
-    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
+    "db:seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
-    "@opennextjs/cloudflare": "^1.20.17",
-    "@prisma/adapter-pg": "^6.19.3",
     "@prisma/client": "^6.19.3",
     "bcryptjs": "^3.0.3",
     "bwip-js": "^4.11.4",
@@ -30,7 +24,6 @@
     "next-auth": "^4.24.15",
     "nodemailer": "^7.0.13",
     "pdf-lib": "^1.17.1",
-    "pg": "^8.23.1",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "recharts": "^3.10.1",
@@ -42,7 +35,6 @@
     "@types/bwip-js": "^3.2.3",
     "@types/node": "^20",
     "@types/nodemailer": "^8.0.1",
-    "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
@@ -50,7 +42,6 @@
     "prisma": "^6.19.3",
     "tailwindcss": "^4",
     "tsx": "^4.23.13",
-    "typescript": "^5",
-    "wrangler": "^4.162.0"
+    "typescript": "^5"
   }
 }

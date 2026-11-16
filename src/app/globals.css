@@ -30,10 +30,15 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-montserrat), var(--font-bangla), "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  text-rendering: optimizeLegibility;
 }
 
 * {
   scrollbar-width: thin;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 :focus-visible {
@@ -94,8 +99,28 @@ body {
   animation: pop-in 0.16s ease-out;
 }
 
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(110deg, #ecece8 8%, #f8f8f5 18%, #ecece8 33%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .pop-in {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .pop-in,
+  .skeleton {
     animation: none;
   }
 }

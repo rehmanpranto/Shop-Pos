@@ -15,7 +15,7 @@ day closing, reports) in one place, on desktop and on a phone.
 - [Tech stack](#tech-stack)
 - [Project structure](#project-structure)
 - [Run it on your computer](#run-it-on-your-computer)
-- [Deploy to Cloudflare](#deploy-to-cloudflare)
+- [Deploy to Vercel](#deploy-to-vercel)
 - [Staff roles](#staff-roles)
 
 ## Features
@@ -83,7 +83,7 @@ inside one database transaction.
 flowchart TD
     Browser["Browser<br/>desktop or phone"]
 
-    subgraph Worker["Cloudflare Worker (Next.js via OpenNext)"]
+    subgraph Vercel["Vercel (Next.js)"]
         Proxy["proxy.ts<br/>sign-in and role check for every page"]
         Pages["Pages<br/>dashboard, POS, products, reports ..."]
         API["API routes<br/>/api/sales, /api/purchases, /api/refunds ..."]
@@ -176,7 +176,7 @@ The full schema, including quotations, deliveries, cheques and settings, is in
 | Validation | Zod |
 | Invoice PDF | pdf-lib |
 | Barcodes | bwip-js |
-| Hosting | Cloudflare Workers through OpenNext |
+| Hosting | Vercel |
 
 ## Project structure
 
@@ -195,8 +195,7 @@ src/
   server/services/     business rules: sales, purchases, refunds, inventory, ledger, closing
   lib/                 database client, sign-in, roles, validation, formatting, invoice PDF
   components/          layout (sidebar, top bar, quick search) and shared UI parts
-wrangler.jsonc         Cloudflare configuration
-open-next.config.ts    Cloudflare adapter configuration
+next.config.ts         Next.js configuration
 ```
 
 ## Run it on your computer
@@ -243,36 +242,31 @@ Useful commands:
 | Command | What it does |
 | --- | --- |
 | `npm run dev` | start the app for development |
-| `npm run build` | build the app for Cloudflare |
-| `npm run build:next` then `npm start` | run the production build on a normal server |
+| `npm run build` | build the app for Vercel or a normal Node.js server |
 | `npm run lint` | check the code |
-| `npm run preview` | run the Cloudflare build on your computer |
 | `npm run db:migrate` | create a new database migration |
 
-## Deploy to Cloudflare
+## Deploy to Vercel
 
-1. In the Cloudflare dashboard go to **Workers & Pages → Create → Import a
-   repository** and pick this repository. Keep the project name `shop-pos`.
-2. Leave the build settings as Cloudflare fills them in:
-   - Build command: `npm run build`
-   - Deploy command: `npx wrangler deploy`
-3. Under **Settings → Variables and Secrets** add these, each as type
-   **Secret**, then redeploy:
+1. Import this repository in Vercel and keep the framework preset as **Next.js**.
+2. Under **Settings → Environment Variables**, add these for **Production**:
    - `DATABASE_URL`
+   - `DATABASE_URL_UNPOOLED`
+   - `NEXTAUTH_URL`
    - `NEXTAUTH_SECRET`
    - `BOOTSTRAP_SETUP_KEY`
+   - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, and `SMTP_FROM` if invoice email is needed.
+3. Use the pooled Neon URL for `DATABASE_URL` and the direct Neon URL for
+   `DATABASE_URL_UNPOOLED`. Redeploy after saving the variables.
 
 Good to know:
 
-- Secrets cannot be stored in the repository, so step 3 has to be done by hand.
-- `NEXTAUTH_URL` is not needed on Cloudflare; sign-in works on whatever address
-  the app is served from.
-- The Workers **Paid** plan is required. The compressed app is about 3.8 MB
-  (the free plan allows 3 MB), and checking a password needs more processing
-  time than the free plan's 10 ms per request.
-- Invoice email uses SMTP and has not been tested on Cloudflare.
-
-The app also runs on any host that supports Next.js (`npm run build:next`, `npm start`).
+- Secrets are not stored in the repository, so add them in Vercel by hand.
+- Set `NEXTAUTH_URL` to the public Vercel URL, for example
+  `https://shop-pos-five.vercel.app`.
+- Use a direct database URL for Prisma migrations and the pooled URL for
+  application traffic.
+- The app also runs on any host that supports Next.js (`npm run build`, `npm start`).
 
 ## Staff roles
 

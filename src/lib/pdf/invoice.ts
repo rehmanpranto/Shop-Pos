@@ -36,7 +36,7 @@ const NUMBER_COLUMNS = ["Qty", "Unit", "Price", "Discount", "Tax", "Total"] as c
 const NUMBER_COLUMN_WIDTH = 62;
 const PRODUCT_COLUMN_WIDTH = CONTENT_WIDTH - NUMBER_COLUMN_WIDTH * NUMBER_COLUMNS.length;
 
-/** Builds the A4 invoice. Uses only plain JavaScript so it also runs on Cloudflare Workers. */
+/** Builds the A4 invoice using only plain JavaScript. */
 export async function renderInvoicePdf(data: InvoiceData): Promise<Uint8Array> {
   const pdf = await PDFDocument.create();
   pdf.setTitle(`Invoice ${data.invoiceNo}`);
