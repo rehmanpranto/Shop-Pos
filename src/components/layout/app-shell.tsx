@@ -57,7 +57,7 @@ export function AppShell({
   return (
     <AppProvider user={user}>
       <ToastProvider>
-        <div className="flex min-h-screen bg-background print:block print:bg-white">
+        <div className="flex min-h-screen bg-transparent print:block print:bg-white">
           <div className="print:hidden">
             <Sidebar
               businessName={businessName}

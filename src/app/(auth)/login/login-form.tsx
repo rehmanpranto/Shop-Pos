@@ -40,7 +40,7 @@ export function LoginForm({ businessName }: { businessName: string }) {
   }
 
   const inputClass =
-    "h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20";
+    "h-11 w-full rounded-xl border border-white/90 bg-white/70 px-3 text-sm text-zinc-900 shadow-sm placeholder:text-zinc-400 focus:border-brand focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand/20";
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
@@ -70,11 +70,13 @@ export function LoginForm({ businessName }: { businessName: string }) {
         <p className="relative text-xs text-slate-400">{tr("Sales · Inventory · Purchases · Customers · Reports")}</p>
       </aside>
 
-      <main className="relative flex items-center justify-center bg-background px-4 py-10">
+      <main className="relative flex items-center justify-center overflow-hidden bg-background px-4 py-10">
+        <div className="pointer-events-none absolute -left-24 top-1/4 h-72 w-72 rounded-full bg-sky-300/25 blur-3xl" />
+        <div className="pointer-events-none absolute -right-24 bottom-1/4 h-80 w-80 rounded-full bg-amber-200/25 blur-3xl" />
         <div className="absolute right-4 top-4">
           <LanguageSwitch />
         </div>
-        <div className="w-full max-w-sm">
+        <div className="relative w-full max-w-sm rounded-[2rem] border border-white/90 bg-white/78 p-7 shadow-[0_18px_50px_rgba(39,70,100,0.08)] backdrop-blur-md sm:p-9">
           <div className="mb-8 flex items-center gap-3 lg:hidden">
             <LogoMark className="h-10 w-10" />
             <span className="text-lg font-bold text-zinc-900">{businessName}</span>
@@ -116,7 +118,7 @@ export function LoginForm({ businessName }: { businessName: string }) {
               </p>
             ) : null}
 
-            <button type="submit" disabled={loading} className="h-11 w-full rounded-lg bg-brand font-semibold text-white transition hover:bg-brand-dark disabled:opacity-60">
+            <button type="submit" disabled={loading} className="h-11 w-full rounded-xl bg-brand font-semibold text-white shadow-lg shadow-brand/20 transition hover:bg-brand-dark disabled:opacity-60">
               {loading ? tr("Signing in…") : tr("Sign in")}
             </button>
           </form>

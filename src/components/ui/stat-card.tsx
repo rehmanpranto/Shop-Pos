@@ -23,7 +23,7 @@ export function StatCard({
   tone?: keyof typeof tones;
 }) {
   return (
-    <div className="min-w-0 rounded-2xl border border-zinc-200 bg-white p-3.5 shadow-sm sm:p-4">
+    <div className="min-w-0 rounded-3xl border border-white/90 bg-white/88 p-3.5 shadow-[0_8px_24px_rgba(39,70,100,0.05)] backdrop-blur-md sm:p-4">
       <div className="flex items-start justify-between gap-3">
         <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{label}</p>
         {Icon ? (

@@ -40,13 +40,13 @@ export function Sidebar({
         onMouseEnter={onActivity}
         onFocusCapture={onActivity}
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex w-64 shrink-0 flex-col bg-sidebar text-slate-300 transition-[width,transform] duration-300 ease-out md:sticky md:top-0 md:h-screen md:translate-x-0",
+          "fixed inset-y-0 left-0 z-40 flex w-64 shrink-0 flex-col border-r border-white/10 bg-sidebar text-slate-300 shadow-[12px_0_40px_rgba(15,34,54,0.12)] backdrop-blur-xl transition-[width,transform] duration-300 ease-out md:sticky md:top-0 md:h-screen md:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full",
           hidden && "md:-translate-x-[calc(100%-12px)]",
           collapsed && "md:w-16",
         )}
       >
-        <div className="flex items-start gap-3 px-4 py-4">
+        <div className="flex items-start gap-3 border-b border-white/10 px-4 py-4">
           <LogoMark className="h-9 w-9" />
           <div className={cn("min-w-0 flex-1", collapsed && "md:hidden")}>
             <p className="line-clamp-2 text-sm font-bold leading-tight text-white">{businessName}</p>
@@ -79,7 +79,7 @@ export function Sidebar({
                       className={cn(
                         "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition",
                         collapsed && "md:justify-center md:px-2",
-                        active ? "bg-white/10 text-white" : "hover:bg-white/5 hover:text-white",
+                        active ? "bg-white/12 text-white shadow-inner shadow-white/5" : "hover:bg-white/7 hover:text-white",
                       )}
                     >
                       <Icon className={cn("h-4 w-4 shrink-0", active ? "text-brand-accent" : "text-slate-400")} />

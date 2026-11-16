@@ -69,7 +69,7 @@ export function Topbar({
   const itemClass = "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-100";
 
   return (
-    <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white/90 px-3 py-2.5 backdrop-blur print:hidden md:px-6">
+    <header className="sticky top-0 z-20 border-b border-white/80 bg-white/78 px-3 py-2.5 shadow-[0_6px_20px_rgba(39,70,100,0.04)] backdrop-blur-md print:hidden md:px-6">
       <div className="flex items-center gap-2 sm:gap-3">
         <button type="button" onClick={onOpenMenu} aria-label={tr("Open menu")} className="rounded-lg p-2 text-zinc-600 hover:bg-zinc-100 md:hidden">
           <Menu className="h-5 w-5" />
@@ -83,7 +83,7 @@ export function Topbar({
         <button
           type="button"
           onClick={onOpenSearch}
-          className="flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-zinc-300 bg-white text-sm text-zinc-500 hover:bg-zinc-50 lg:w-auto lg:px-3"
+          className="flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-white/90 bg-white/85 text-sm text-zinc-500 shadow-sm hover:bg-white lg:w-auto lg:px-3"
           aria-label={tr("Search pages and actions")}
         >
           <Search className="h-4 w-4" />
@@ -109,12 +109,12 @@ export function Topbar({
             aria-haspopup="menu"
             aria-expanded={menuOpen}
             aria-label={tr("Account menu")}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-bold text-white hover:bg-brand-dark"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/70 bg-brand text-sm font-bold text-white shadow-md shadow-brand/20 hover:bg-brand-dark"
           >
             {initials || "U"}
           </button>
           {menuOpen ? (
-            <div role="menu" className="pop-in absolute right-0 mt-2 w-64 rounded-xl border border-zinc-200 bg-white p-1.5 shadow-xl">
+            <div role="menu" className="pop-in absolute right-0 mt-2 w-64 rounded-2xl border border-white/80 bg-white/90 p-1.5 shadow-xl backdrop-blur-xl">
               <div className="border-b border-zinc-100 px-3 py-2">
                 <p className="truncate text-sm font-semibold text-zinc-900">{user.name}</p>
                 <p className="truncate text-xs text-zinc-500">{user.email}</p>
