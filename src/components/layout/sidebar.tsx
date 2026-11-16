@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { PanelLeftClose, PanelLeftOpen, Store, X } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LogoMark } from "@/components/brand/logo-mark";
 import { useApp } from "./app-context";
 import { navForRole } from "./nav";
 import { useTr } from "@/components/layout/language";
@@ -46,9 +47,7 @@ export function Sidebar({
         )}
       >
         <div className="flex items-start gap-3 px-4 py-4">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-accent text-zinc-900">
-            <Store className="h-5 w-5" />
-          </span>
+          <LogoMark className="h-9 w-9" />
           <div className={cn("min-w-0 flex-1", collapsed && "md:hidden")}>
             <p className="line-clamp-2 text-sm font-bold leading-tight text-white">{businessName}</p>
             {branchName ? <p className="truncate text-xs text-slate-400">{branchName}</p> : null}

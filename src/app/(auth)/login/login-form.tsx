@@ -3,7 +3,8 @@
 import { FormEvent, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { BarChart3, Eye, EyeOff, PackageCheck, ScanLine, Store } from "lucide-react";
+import { BarChart3, Eye, EyeOff, PackageCheck, ScanLine } from "lucide-react";
+import { LogoMark } from "@/components/brand/logo-mark";
 import { LanguageSwitch, useTr } from "@/components/layout/language";
 
 const highlights = [
@@ -47,9 +48,7 @@ export function LoginForm({ businessName }: { businessName: string }) {
         <div className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-brand opacity-40 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-32 -left-16 h-80 w-80 rounded-full bg-brand-accent opacity-10 blur-3xl" />
         <div className="relative flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-accent text-zinc-900">
-            <Store className="h-5 w-5" />
-          </span>
+          <LogoMark className="h-10 w-10" />
           <span className="text-lg font-bold">{businessName}</span>
         </div>
         <div className="relative">
@@ -77,9 +76,7 @@ export function LoginForm({ businessName }: { businessName: string }) {
         </div>
         <div className="w-full max-w-sm">
           <div className="mb-8 flex items-center gap-3 lg:hidden">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-accent text-zinc-900">
-              <Store className="h-5 w-5" />
-            </span>
+            <LogoMark className="h-10 w-10" />
             <span className="text-lg font-bold text-zinc-900">{businessName}</span>
           </div>
 
