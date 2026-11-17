@@ -17,7 +17,7 @@ export async function GET() {
   if (!auth.ok) return fail(auth.message, auth.status);
 
   const users = await prisma.user.findMany({
-    where: { branchId: auth.user.branchId ?? undefined },
+    where: { branchId: auth.user.branchId ?? undefined, deletedAt: null },
     select: { id: true, name: true, email: true, role: true, isActive: true, createdAt: true },
     orderBy: { createdAt: "desc" },
   });

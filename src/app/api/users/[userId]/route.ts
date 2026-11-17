@@ -60,3 +60,43 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ us
 
   return ok({ id: target.id });
 }
+
+/**
+ * Removes someone who has left the business. Sales, purchases and other records point at
+ * the user, so the row is kept for history: it is disabled, hidden from the Users list, and
+ * its email is freed so the same address can be added again later.
+ */
+export async function DELETE(_: Request, { params }: { params: Promise<{ userId: string }> }) {
+  const auth = await requireApiAuth("users:delete");
+  if (!auth.ok) return fail(auth.message, auth.status);
+  const { userId } = await params;
+
+  const target = await prisma.user.findUnique({ where: { id: userId } });
+  if (!target || target.deletedAt) return fail("User not found", 404);
+  if (target.id === auth.user.id) return fail("You cannot delete your own account", 400);
+  if (target.role === "ADMIN" && target.isActive) {
+    const otherAdmins = await prisma.user.count({ where: { role: "ADMIN", isActive: true, deletedAt: null, id: { not: target.id } } });
+    if (otherAdmins === 0) return fail("There must be at least one active admin", 400);
+  }
+
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: target.id },
+      data: { isActive: false, deletedAt: new Date(), email: `${target.email}.deleted-${Date.now()}` },
+    }),
+    prisma.session.deleteMany({ where: { userId: target.id } }),
+    prisma.auditLog.create({
+      data: {
+        userId: auth.user.id,
+        branchId: auth.user.branchId,
+        action: "USER_DELETED",
+        entity: "User",
+        entityId: target.id,
+        oldValues: JSON.stringify({ name: target.name, email: target.email, role: target.role, isActive: target.isActive }),
+        newValues: JSON.stringify({ deleted: true }),
+      },
+    }),
+  ]);
+
+  return ok({ id: target.id });
+}

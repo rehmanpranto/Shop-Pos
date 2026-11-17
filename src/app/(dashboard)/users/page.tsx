@@ -7,13 +7,14 @@ import { PageHeader } from "@/components/ui/page-header";
 import { TableSearch } from "@/components/ui/table-search";
 import { UserCreateForm } from "./user-create-form";
 import { UserEditForm } from "./user-edit-form";
+import { UserDeleteButton } from "./user-delete-button";
 import { getTr } from "@/lib/i18n-server";
 
 export default async function UsersPage() {
   const tr = await getTr();
   const { user } = await getSessionContext();
   const [users, branches] = await Promise.all([
-    prisma.user.findMany({ orderBy: { createdAt: "asc" }, include: { branch: { select: { name: true } } } }),
+    prisma.user.findMany({ where: { deletedAt: null }, orderBy: { createdAt: "asc" }, include: { branch: { select: { name: true } } } }),
     prisma.branch.findMany({ where: { isActive: true }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
   ]);
   const isAdmin = user?.role === "ADMIN";
@@ -51,7 +52,7 @@ export default async function UsersPage() {
                   <td className="text-zinc-600">{formatDate(u.createdAt)}</td>
                   <td>{u.isActive ? <Badge tone="green">{tr("Active")}</Badge> : <Badge tone="red">{tr("Disabled")}</Badge>}</td>
                   <td>
-                    <div className="flex justify-end">
+                    <div className="flex justify-end gap-1.5">
                       {isAdmin ? (
                         <UserEditForm
                           user={{ id: u.id, name: u.name, email: u.email, role: u.role, branchId: u.branchId ?? branches[0]?.id ?? "", isActive: u.isActive }}
@@ -59,6 +60,7 @@ export default async function UsersPage() {
                           isSelf={u.id === user?.id}
                         />
                       ) : null}
+                      {isAdmin && u.id !== user?.id ? <UserDeleteButton userId={u.id} name={u.name} /> : null}
                     </div>
                   </td>
                 </tr>

@@ -152,6 +152,8 @@ model User {
   passwordHash   String
   role           UserRole
   isActive       Boolean     @default(true)
+  /// Set when an admin removes someone who left. Their past records stay; they are hidden and cannot sign in.
+  deletedAt      DateTime?
   branchId       String?
   branch         Branch?     @relation(fields: [branchId], references: [id])
   createdAt      DateTime    @default(now())
