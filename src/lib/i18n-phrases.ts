@@ -302,6 +302,8 @@ export const bnPhrases: Record<string, string> = {
   "Sales you ring up in the POS appear here with their invoices.": "POS-এ করা বিক্রয় ইনভয়েসসহ এখানে দেখা যাবে।",
   "Search invoice, customer or cashier": "ইনভয়েস, ক্রেতা বা ক্যাশিয়ার খুঁজুন",
   "Delete": "মুছুন",
+  "Welcome back": "আবার স্বাগতম",
+  "Point of sale": "পয়েন্ট অফ সেল",
   "Disable": "নিষ্ক্রিয় করুন",
   "Enable": "সক্রিয় করুন",
   "{0} disabled": "{0} নিষ্ক্রিয় করা হয়েছে",
