@@ -123,6 +123,7 @@ model Branch {
 
   users          User[]
   categories     Category[]
+  manufacturers  Manufacturer[]
   products       Product[]
   customers      Customer[]
   suppliers      Supplier[]
@@ -228,6 +229,25 @@ model Category {
   @@unique([branchId, name])
 }
 
+model Manufacturer {
+  id             String    @id @default(cuid())
+  name           String
+  description    String?
+  imageUrl       String?
+  seoTitle       String?
+  seoDescription String?
+  branchId       String
+  branch         Branch    @relation(fields: [branchId], references: [id])
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  products       Product[]
+
+  @@unique([branchId, name])
+  @@index([branchId, isActive])
+}
+
 model Supplier {
   id            String   @id @default(cuid())
   supplierCode  String
@@ -298,6 +318,8 @@ model Product {
   category            Category? @relation(fields: [categoryId], references: [id])
   subcategory         String?
   brand               String?
+  manufacturerId      String?
+  manufacturer        Manufacturer? @relation(fields: [manufacturerId], references: [id])
   baseUnitId          String
   baseUnit            Unit      @relation("baseUnit", fields: [baseUnitId], references: [id])
   purchasePrice       Decimal   @db.Decimal(14, 4)
@@ -328,6 +350,7 @@ model Product {
   @@unique([branchId, sku])
   @@index([branchId, name])
   @@index([branchId, barcode])
+  @@index([manufacturerId])
 }
 
 model ProductVariation {

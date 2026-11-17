@@ -12,6 +12,10 @@ const createProductSchema = z.object({
   description: z.string().optional(),
   categoryName: z.string().trim().max(80).optional(),
   brand: z.string().trim().max(80).optional(),
+  manufacturerId: z.string().optional(),
+  taxRate: z.number().min(0).max(100).default(0),
+  imageUrl: z.string().url().optional().or(z.literal("")),
+  maxStock: z.number().min(0).default(0),
   baseUnitId: z.string().min(1),
   purchasePrice: z.number().positive(),
   retailPrice: z.number().positive(),
@@ -70,7 +74,12 @@ export async function POST(request: Request) {
   const branchId = auth.user.branchId!;
 
   try {
-    const { categoryName, supplierId, conversions, ...payload } = createProductSchema.parse(await request.json());
+    const { categoryName, supplierId, manufacturerId, conversions, ...payload } = createProductSchema.parse(await request.json());
+
+    const manufacturer = manufacturerId
+      ? await prisma.manufacturer.findFirst({ where: { id: manufacturerId, branchId }, select: { id: true } })
+      : null;
+    if (manufacturerId && !manufacturer) return fail("Manufacturer not found", 400);
 
     const product = await prisma.$transaction(async (tx) =>
       tx.product.create({
@@ -80,6 +89,7 @@ export async function POST(request: Request) {
           branchId,
           categoryId: await resolveCategoryId(tx, branchId, categoryName),
           supplierId: await resolveSupplierId(tx, branchId, supplierId),
+          manufacturerId: manufacturer?.id,
           weightedAverageCost: payload.purchasePrice,
           unitConversions: { create: conversionRows(payload.baseUnitId, conversions) },
         },

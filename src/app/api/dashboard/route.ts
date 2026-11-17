@@ -1,4 +1,4 @@
-import { startOfDay } from "date-fns";
+import { startOfDay, subDays } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { requireApiAuth } from "@/lib/api-auth";
 import { fail, ok } from "@/lib/response";
@@ -10,7 +10,7 @@ export async function GET() {
   const branchId = auth.user.branchId!;
   const dayStart = startOfDay(new Date());
 
-  const [todaySales, todayRefunds, todayExpenses, products, todaySaleIds] =
+  const [todaySales, todayRefunds, todayExpenses, products, todaySaleIds, totalOrders, deliveryCounts, newCustomers] =
     await Promise.all([
       prisma.sale.aggregate({
         where: { branchId, saleDate: { gte: dayStart }, status: "COMPLETED" },
@@ -34,6 +34,9 @@ export async function GET() {
         where: { branchId, saleDate: { gte: dayStart }, status: "COMPLETED" },
         select: { id: true },
       }),
+      prisma.sale.count({ where: { branchId, status: { not: "VOIDED" } } }),
+      prisma.delivery.groupBy({ by: ["status"], where: { branchId }, _count: { id: true } }),
+      prisma.customer.count({ where: { branchId, createdAt: { gte: subDays(dayStart, 30) } } }),
     ]);
 
   const topProducts =
@@ -68,6 +71,9 @@ export async function GET() {
 
   return ok({
     sales: todaySales,
+    totalOrders,
+    orderStatuses: Object.fromEntries(deliveryCounts.map((item) => [item.status, item._count.id])),
+    newCustomers,
     refunds: todayRefunds,
     expenses: todayExpenses,
     inventory: {

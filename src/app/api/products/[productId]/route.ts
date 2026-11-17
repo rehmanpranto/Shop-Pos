@@ -14,6 +14,12 @@ const updateProductSchema = z.object({
   wholesalePrice: z.number().positive(),
   minSellingPrice: z.number().positive(),
   minStock: z.number().min(0),
+  description: z.string().max(5000).optional(),
+  brand: z.string().trim().max(80).optional(),
+  manufacturerId: z.string().optional(),
+  taxRate: z.number().min(0).max(100),
+  imageUrl: z.string().url().optional().or(z.literal("")),
+  maxStock: z.number().min(0),
   isActive: z.boolean(),
   conversions: conversionsSchema,
 });
@@ -25,9 +31,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ pr
   const { productId } = await params;
 
   try {
-    const { categoryName, supplierId, conversions, ...input } = updateProductSchema.parse(await request.json());
+    const { categoryName, supplierId, manufacturerId, conversions, ...input } = updateProductSchema.parse(await request.json());
     const existing = await prisma.product.findFirst({ where: { id: productId, branchId } });
     if (!existing) return fail("Product not found", 404);
+    if (manufacturerId) {
+      const manufacturer = await prisma.manufacturer.findFirst({ where: { id: manufacturerId, branchId }, select: { id: true } });
+      if (!manufacturer) return fail("Manufacturer not found", 400);
+    }
 
     const product = await prisma.$transaction(async (tx) => {
       await tx.productUnitConversion.deleteMany({ where: { productId: existing.id } });
@@ -38,6 +48,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ pr
           barcode: input.barcode || existing.sku,
           categoryId: await resolveCategoryId(tx, branchId, categoryName),
           supplierId: await resolveSupplierId(tx, branchId, supplierId),
+          manufacturerId: manufacturerId || null,
           unitConversions: { create: conversionRows(existing.baseUnitId, conversions) },
         },
       });

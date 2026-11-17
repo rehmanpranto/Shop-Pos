@@ -15,6 +15,7 @@ export const PAGE_ROLES: Record<string, Role[]> = {
   "/inventory": ["ADMIN", "MANAGER", "INVENTORY"],
   "/purchases": ["ADMIN", "MANAGER", "INVENTORY", "ACCOUNTANT"],
   "/suppliers": ["ADMIN", "MANAGER", "INVENTORY", "ACCOUNTANT"],
+  "/manufacturers": ["ADMIN", "MANAGER", "INVENTORY", "ACCOUNTANT"],
   "/payments": ["ADMIN", "MANAGER", "ACCOUNTANT"],
   "/expenses": ["ADMIN", "MANAGER", "ACCOUNTANT"],
   "/closing": ["ADMIN", "MANAGER", "CASHIER", "ACCOUNTANT"],

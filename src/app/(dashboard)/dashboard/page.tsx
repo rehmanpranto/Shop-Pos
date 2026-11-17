@@ -46,7 +46,7 @@ export default async function DashboardPage() {
   const monthStart = new Date(`${dhakaDateKey(now).slice(0, 7)}-01T00:00:00${DHAKA_OFFSET}`);
   const completed = { branchId, status: "COMPLETED" as const };
 
-  const [todaySales, yesterdaySales, monthSales, trendSales, todayExpenses, todayRefunds, products, receivables, recentSales, payments, topItems, customerCount] =
+  const [todaySales, yesterdaySales, monthSales, trendSales, todayExpenses, todayRefunds, products, receivables, recentSales, payments, topItems, customerCount, totalOrders, deliveryCounts, newCustomers] =
     await Promise.all([
       prisma.sale.aggregate({ where: { ...completed, saleDate: { gte: today } }, _sum: { totalAmount: true, grossProfit: true }, _count: { id: true } }),
       prisma.sale.aggregate({ where: { ...completed, saleDate: { gte: yesterday, lt: today } }, _sum: { totalAmount: true } }),
@@ -69,6 +69,9 @@ export default async function DashboardPage() {
         take: 6,
       }),
       prisma.customer.count({ where: { branchId } }),
+      prisma.sale.count({ where: { branchId, status: { not: "VOIDED" } } }),
+      prisma.delivery.groupBy({ by: ["status"], where: { branchId }, _count: { id: true } }),
+      prisma.customer.count({ where: { branchId, createdAt: { gte: subDays(today, 30) } } }),
     ]);
 
   const buckets = new Map<string, { label: string; sales: number; profit: number }>();
@@ -101,6 +104,7 @@ export default async function DashboardPage() {
     qty: toNumber(item._sum.qty),
   }));
   const paymentData = payments.map((p) => ({ name: tr(humanize(p.method)), value: toNumber(p._sum.amount) })).filter((p) => p.value > 0);
+  const deliveryTotals = new Map(deliveryCounts.map((item) => [item.status, item._count.id]));
 
   const steps = [
     { done: products.length > 0, title: tr("Add your products"), text: tr("Names, prices and opening stock."), href: "/products" },
@@ -158,6 +162,13 @@ export default async function DashboardPage() {
           hint={change === null ? tr("{0} sales", todaySales._count.id) : tr("{0}{1}% vs yesterday · {2} sales", change >= 0 ? "+" : "", change.toFixed(0), todaySales._count.id)}
           icon={Banknote}
         />
+        <StatCard label={tr("Total orders")} value={`${totalOrders}`} hint={tr("All non-voided orders")} icon={Receipt} tone="neutral" />
+        <StatCard label={tr("Pending orders")} value={`${deliveryTotals.get("PENDING") ?? 0}`} hint={tr("Awaiting fulfilment")} icon={Package} tone="amber" />
+        <StatCard label={tr("Processing orders")} value={`${(deliveryTotals.get("PREPARING") ?? 0)}`} hint={tr("Being prepared")} icon={Package} tone="neutral" />
+        <StatCard label={tr("Shipped orders")} value={`${deliveryTotals.get("OUT_FOR_DELIVERY") ?? 0}`} hint={tr("Out for delivery")} icon={TrendingUp} tone="green" />
+        <StatCard label={tr("Delivered orders")} value={`${deliveryTotals.get("DELIVERED") ?? 0}`} hint={tr("Successfully delivered")} icon={Check} tone="green" />
+        <StatCard label={tr("Cancelled orders")} value={`${deliveryTotals.get("CANCELLED") ?? 0}`} hint={tr("Cancelled shipments")} icon={Receipt} tone="red" />
+        <StatCard label={tr("New customers")} value={`${newCustomers}`} hint={tr("Joined in the last 30 days")} icon={HandCoins} tone="neutral" />
         <StatCard
           label={tr("Gross profit today")}
           value={formatMoney(todayProfit)}

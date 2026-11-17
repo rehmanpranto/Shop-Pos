@@ -1,6 +1,7 @@
 import {
   Activity,
   Building2,
+  Factory,
   ClipboardList,
   GitBranch,
   HandCoins,
@@ -62,6 +63,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { title: "Inventory", key: "nav.inventory", href: "/inventory", icon: Warehouse, description: "Stock movements" },
       { title: "Purchases", key: "nav.purchases", href: "/purchases", icon: ShoppingCart, description: "Receive stock" },
       { title: "Suppliers", key: "nav.suppliers", href: "/suppliers", icon: Building2, description: "Supplier list" },
+      { title: "Manufacturers", key: "nav.manufacturers", href: "/manufacturers", icon: Factory, description: "Brands and makers" },
     ],
   },
   {

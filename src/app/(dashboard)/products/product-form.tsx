@@ -24,11 +24,17 @@ export type EditableProduct = {
   wholesalePrice: number;
   minSellingPrice: number;
   minStock: number;
+  description?: string;
+  brand?: string;
+  manufacturerId?: string;
+  taxRate?: number;
+  imageUrl?: string;
+  maxStock?: number;
   isActive: boolean;
   conversions: Array<{ unitId: string; factor: number }>;
 };
 
-export function ProductForm({ units, categories, suppliers, product }: { units: Unit[]; categories: string[]; suppliers: Option[]; product?: EditableProduct }) {
+export function ProductForm({ units, categories, suppliers, manufacturers, product }: { units: Unit[]; categories: string[]; suppliers: Option[]; manufacturers: Option[]; product?: EditableProduct }) {
   const tr = useTr();
   const editing = Boolean(product);
   const [baseUnitId, setBaseUnitId] = useState(product?.baseUnitId ?? "");
@@ -55,6 +61,12 @@ export function ProductForm({ units, categories, suppliers, product }: { units: 
       barcode: optionalText(form, "barcode"),
       categoryName: optionalText(form, "categoryName"),
       supplierId: optionalText(form, "supplierId"),
+      description: optionalText(form, "description"),
+      brand: optionalText(form, "brand"),
+      manufacturerId: optionalText(form, "manufacturerId"),
+      taxRate: number(form, "taxRate"),
+      imageUrl: optionalText(form, "imageUrl"),
+      maxStock: number(form, "maxStock"),
       minStock: number(form, "minStock"),
       conversions: filled.map((row) => ({ unitId: row.unitId, factor: Number(row.factor) })),
       ...prices,
@@ -105,6 +117,14 @@ export function ProductForm({ units, categories, suppliers, product }: { units: 
             ))}
           </datalist>
         </Field>
+        <Field label={tr("Manufacturer")}>
+          <Select name="manufacturerId" defaultValue={product?.manufacturerId ?? ""}>
+            <option value="">{tr("None")}</option>
+            {manufacturers.map((manufacturer) => <option key={manufacturer.id} value={manufacturer.id}>{manufacturer.name}</option>)}
+          </Select>
+        </Field>
+        <Field label={tr("Brand")}><Input name="brand" defaultValue={product?.brand} /></Field>
+        <Field label={tr("Description")} className="sm:col-span-2"><Input name="description" defaultValue={product?.description} /></Field>
         <Field label={tr("Usual supplier (optional)")} hint={tr("Used for the reorder list.")}>
           <Select name="supplierId" defaultValue={product?.supplierId ?? ""}>
             <option value="">{tr("None")}</option>
@@ -208,6 +228,11 @@ export function ProductForm({ units, categories, suppliers, product }: { units: 
         <Field label={tr("Warn me below")} hint={tr("Low-stock alert level.")}>
           <Input name="minStock" type="number" min="0" step="0.001" defaultValue={product?.minStock ?? 0} />
         </Field>
+        <Field label={tr("Maximum stock")} hint={tr("Optional replenishment ceiling.")}>
+          <Input name="maxStock" type="number" min="0" step="0.001" defaultValue={product?.maxStock ?? 0} />
+        </Field>
+        <Field label={tr("Tax rate (%)")}><Input name="taxRate" type="number" min="0" max="100" step="0.01" defaultValue={product?.taxRate ?? 0} /></Field>
+        <Field label={tr("Product image URL")} className="sm:col-span-2"><Input name="imageUrl" type="url" defaultValue={product?.imageUrl} /></Field>
       </div>
 
       {editing ? (

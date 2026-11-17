@@ -17,22 +17,23 @@ import { getTr } from "@/lib/i18n-server";
 export default async function ProductsPage() {
   const tr = await getTr();
   const { user, branchId } = await getSessionContext();
-  const [products, units, categoryRows, suppliers, otherBranches] = branchId
+  const [products, units, categoryRows, suppliers, manufacturers, otherBranches] = branchId
     ? await Promise.all([
         prisma.product.findMany({
           where: { branchId },
-          include: { baseUnit: true, category: true, unitConversions: { include: { fromUnit: { select: { code: true } } } } },
+          include: { baseUnit: true, category: true, manufacturer: true, unitConversions: { include: { fromUnit: { select: { code: true } } } } },
           orderBy: { name: "asc" },
         }),
         prisma.unit.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, code: true } }),
         prisma.category.findMany({ where: { branchId }, orderBy: { name: "asc" }, select: { name: true } }),
         prisma.supplier.findMany({ where: { branchId, isActive: true }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
+        prisma.manufacturer.findMany({ where: { branchId, isActive: true }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
         prisma.branch.findMany({ where: { isActive: true, id: { not: branchId } }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
       ])
-    : [[], [], [], [], []];
+    : [[], [], [], [], [], []];
   const categories = categoryRows.map((c) => c.name);
   const canTransfer = user?.role === "ADMIN" && otherBranches.length > 0;
-  const addProduct = <ProductForm units={units} categories={categories} suppliers={suppliers} />;
+  const addProduct = <ProductForm units={units} categories={categories} suppliers={suppliers} manufacturers={manufacturers} />;
 
   const rows = products.map((p) => {
     const stock = toNumber(p.stockQty);
@@ -118,6 +119,7 @@ export default async function ProductsPage() {
                           units={units}
                           categories={categories}
                           suppliers={suppliers}
+                          manufacturers={manufacturers}
                           product={{
                             supplierId: p.supplierId ?? "",
                             baseUnitId: p.baseUnitId,
@@ -127,6 +129,12 @@ export default async function ProductsPage() {
                             sku: p.sku,
                             barcode: p.barcode ?? p.sku,
                             categoryName: p.category?.name ?? "",
+                            manufacturerId: p.manufacturerId ?? "",
+                            brand: p.brand ?? "",
+                            description: p.description ?? "",
+                            taxRate: toNumber(p.taxRate),
+                            imageUrl: p.imageUrl ?? "",
+                            maxStock: toNumber(p.maxStock),
                             purchasePrice: toNumber(p.purchasePrice),
                             retailPrice: toNumber(p.retailPrice),
                             wholesalePrice: toNumber(p.wholesalePrice),
