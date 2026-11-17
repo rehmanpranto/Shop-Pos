@@ -62,16 +62,33 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ us
 }
 
 /**
- * Removes someone who has left the business. Sales, purchases and other records point at
- * the user, so the row is kept for history: it is disabled, hidden from the Users list, and
- * its email is freed so the same address can be added again later.
+ * Deletes someone who has left the business. A user with no sales, purchases or other
+ * records is erased completely. A user who has records cannot be erased (the database
+ * keeps who made each sale), so they are removed from the Users list for good, can never
+ * sign in again, and their email is freed so it can be used for a new account.
  */
 export async function DELETE(_: Request, { params }: { params: Promise<{ userId: string }> }) {
   const auth = await requireApiAuth("users:delete");
   if (!auth.ok) return fail(auth.message, auth.status);
   const { userId } = await params;
 
-  const target = await prisma.user.findUnique({ where: { id: userId } });
+  const target = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      _count: {
+        select: {
+          sales: true,
+          purchases: true,
+          refunds: true,
+          paymentLedgers: true,
+          expenses: true,
+          quotations: true,
+          dailyClosings: true,
+          inventoryTransactions: true,
+        },
+      },
+    },
+  });
   if (!target || target.deletedAt) return fail("User not found", 404);
   if (target.id === auth.user.id) return fail("You cannot delete your own account", 400);
   if (target.role === "ADMIN" && target.isActive) {
@@ -79,24 +96,32 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ userId:
     if (otherAdmins === 0) return fail("There must be at least one active admin", 400);
   }
 
-  await prisma.$transaction([
-    prisma.user.update({
-      where: { id: target.id },
-      data: { isActive: false, deletedAt: new Date(), email: `${target.email}.deleted-${Date.now()}` },
-    }),
-    prisma.session.deleteMany({ where: { userId: target.id } }),
-    prisma.auditLog.create({
-      data: {
-        userId: auth.user.id,
-        branchId: auth.user.branchId,
-        action: "USER_DELETED",
-        entity: "User",
-        entityId: target.id,
-        oldValues: JSON.stringify({ name: target.name, email: target.email, role: target.role, isActive: target.isActive }),
-        newValues: JSON.stringify({ deleted: true }),
-      },
-    }),
-  ]);
+  const hasRecords = Object.values(target._count).some((count) => count > 0);
+  const auditEntry = prisma.auditLog.create({
+    data: {
+      userId: auth.user.id,
+      branchId: auth.user.branchId,
+      action: "USER_DELETED",
+      entity: "User",
+      entityId: target.id,
+      oldValues: JSON.stringify({ name: target.name, email: target.email, role: target.role, isActive: target.isActive }),
+      newValues: JSON.stringify({ deleted: true, keptForHistory: hasRecords }),
+    },
+  });
+
+  if (hasRecords) {
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: target.id },
+        data: { isActive: false, deletedAt: new Date(), email: `${target.email}.deleted-${Date.now()}` },
+      }),
+      prisma.session.deleteMany({ where: { userId: target.id } }),
+      auditEntry,
+    ]);
+  } else {
+    // Sessions and sign-in accounts cascade; their audit log entries keep the event but lose the name link.
+    await prisma.$transaction([prisma.user.delete({ where: { id: target.id } }), auditEntry]);
+  }
 
   return ok({ id: target.id });
 }

@@ -8,6 +8,7 @@ import { TableSearch } from "@/components/ui/table-search";
 import { UserCreateForm } from "./user-create-form";
 import { UserEditForm } from "./user-edit-form";
 import { UserDeleteButton } from "./user-delete-button";
+import { UserStatusButton } from "./user-status-button";
 import { getTr } from "@/lib/i18n-server";
 
 export default async function UsersPage() {
@@ -18,6 +19,14 @@ export default async function UsersPage() {
     prisma.branch.findMany({ where: { isActive: true }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
   ]);
   const isAdmin = user?.role === "ADMIN";
+  const editable = (u: (typeof users)[number]) => ({
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    role: u.role,
+    branchId: u.branchId ?? branches[0]?.id ?? "",
+    isActive: u.isActive,
+  });
 
   return (
     <div>
@@ -54,13 +63,14 @@ export default async function UsersPage() {
                   <td>
                     <div className="flex justify-end gap-1.5">
                       {isAdmin ? (
-                        <UserEditForm
-                          user={{ id: u.id, name: u.name, email: u.email, role: u.role, branchId: u.branchId ?? branches[0]?.id ?? "", isActive: u.isActive }}
-                          branches={branches}
-                          isSelf={u.id === user?.id}
-                        />
+                        <UserEditForm user={editable(u)} branches={branches} isSelf={u.id === user?.id} />
                       ) : null}
-                      {isAdmin && u.id !== user?.id ? <UserDeleteButton userId={u.id} name={u.name} /> : null}
+                      {isAdmin && u.id !== user?.id ? (
+                        <>
+                          <UserStatusButton user={editable(u)} />
+                          <UserDeleteButton userId={u.id} name={u.name} />
+                        </>
+                      ) : null}
                     </div>
                   </td>
                 </tr>

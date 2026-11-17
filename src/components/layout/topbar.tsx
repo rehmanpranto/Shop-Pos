@@ -142,7 +142,12 @@ export function Topbar({
                 <KeyRound className="h-4 w-4" />
                 {t("top.changePassword")}
               </Link>
-              <button type="button" role="menuitem" onClick={() => signOut({ callbackUrl: "/login" })} className={`${itemClass} text-red-700 hover:bg-red-50`}>
+              <button type="button" role="menuitem" onClick={async () => {
+                  // Clear the session without following the server's redirect, which is built from
+                  // NEXTAUTH_URL and lands on a 404 when that points at a different domain.
+                  await signOut({ redirect: false }).catch(() => undefined);
+                  window.location.assign("/login");
+                }} className={`${itemClass} text-red-700 hover:bg-red-50`}>
                 <LogOut className="h-4 w-4" />
                 {t("top.signOut")}
               </button>

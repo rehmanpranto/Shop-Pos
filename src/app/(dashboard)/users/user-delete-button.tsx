@@ -35,7 +35,7 @@ export function UserDeleteButton({ userId, name }: { userId: string; name: strin
       <Button variant="ghost" size="sm" className="text-red-700 hover:bg-red-50 hover:text-red-800" onClick={() => setConfirming(true)}>
         <Trash2 className="h-3.5 w-3.5" />{tr("Delete")}</Button>
       <Modal open={confirming} onClose={close} title={tr("Delete {0}?", name)} size="sm">
-        <p className="text-sm text-zinc-600">{tr("They will be signed out straight away and can no longer use the POS. Sales and other records they made stay in your reports. This cannot be undone.")}</p>
+        <p className="text-sm text-zinc-600">{tr("This permanently removes them from your users and signs them out. Sales and other records they made stay in your reports. This cannot be undone. To block them for a while instead, use Disable.")}</p>
         <div className="mt-5 flex justify-end gap-2">
           <Button variant="secondary" onClick={close}>{tr("Keep user")}</Button>
           <Button variant="danger" onClick={removeUser} disabled={busy}>
