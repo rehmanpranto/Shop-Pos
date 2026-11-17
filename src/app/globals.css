@@ -67,20 +67,23 @@ html {
   letter-spacing: 0.05em;
   text-transform: uppercase;
   white-space: nowrap;
-  color: #71717a;
-  background: #fafaf8;
-  border-bottom: 1px solid #e4e4e7;
+  color: #64748b;
+  background: rgba(241, 245, 249, 0.7);
+  border-bottom: 1px solid #e2e8f0;
 }
 .data-table td {
   padding: 0.7rem 0.875rem;
-  border-bottom: 1px solid #f1f1ef;
+  border-bottom: 1px solid #eef2f6;
   vertical-align: middle;
 }
 .data-table tbody tr:last-child td {
   border-bottom: 0;
 }
+.data-table tbody tr {
+  transition: background-color 0.12s;
+}
 .data-table tbody tr:hover {
-  background: #fafaf8;
+  background: rgba(228, 239, 250, 0.45);
 }
 .data-table .num {
   text-align: right;
@@ -116,7 +119,7 @@ html {
 }
 
 .skeleton {
-  background: linear-gradient(110deg, #ecece8 8%, #f8f8f5 18%, #ecece8 33%);
+  background: linear-gradient(110deg, #e6edf5 8%, #f4f7fb 18%, #e6edf5 33%);
   background-size: 200% 100%;
   animation: shimmer 1.4s linear infinite;
 }
@@ -148,7 +151,7 @@ html {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.6rem 1rem;
     padding: 0.875rem;
-    border-bottom: 1px solid #ececea;
+    border-bottom: 1px solid #eef2f6;
   }
   .table-stack .data-table tbody tr:last-child {
     border-bottom: 0;

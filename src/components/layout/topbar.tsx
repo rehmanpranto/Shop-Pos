@@ -64,7 +64,6 @@ export function Topbar({
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 4);
-    onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
@@ -86,13 +85,13 @@ export function Topbar({
       }`}
     >
       <div className="flex items-center gap-2 sm:gap-3">
-        <button type="button" onClick={onOpenMenu} aria-label={tr("Open menu")} className="rounded-lg p-2 text-zinc-600 hover:bg-zinc-100 md:hidden">
+        <button type="button" onClick={onOpenMenu} aria-label={tr("Open menu")} className="rounded-lg p-2 text-zinc-600 hover:bg-white/70 md:hidden">
           <Menu className="h-5 w-5" />
         </button>
 
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-base font-bold text-zinc-900">{current ? t(current.key) : "Rahman Hardware"}</h1>
-          <p className="hidden truncate text-xs text-zinc-500 sm:block">{current ? tr(current.description) : ""}</p>
+          {/* The page itself shows the big heading, so on wider screens this is a quiet "you are here" label. */}
+          <h1 className="truncate text-base font-bold text-zinc-900 sm:text-sm sm:font-semibold sm:text-slate-500">{current ? t(current.key) : "Rahman Hardware"}</h1>
         </div>
 
         <button

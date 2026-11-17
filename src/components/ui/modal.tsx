@@ -57,17 +57,17 @@ export function Modal({
   // Portal to <body> so ancestors with backdrop-filter/transform/overflow-hidden (e.g. TableCard) cannot clip the dialog.
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label={title}>
-      <button type="button" aria-label={tr("Close")} tabIndex={-1} onClick={onClose} className="absolute inset-0 cursor-default bg-zinc-900/50" />
+      <button type="button" aria-label={tr("Close")} tabIndex={-1} onClick={onClose} className="absolute inset-0 cursor-default bg-slate-900/40 backdrop-blur-sm" />
       <div
         ref={panelRef}
         className={cn(
-          "pop-in relative flex max-h-[92vh] max-h-[92dvh] w-full flex-col rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl",
+          "pop-in relative flex max-h-[92vh] max-h-[92dvh] w-full flex-col rounded-t-3xl bg-white shadow-2xl shadow-slate-900/20 sm:rounded-3xl",
           size === "sm" && "sm:max-w-md",
           size === "md" && "sm:max-w-2xl",
           size === "lg" && "sm:max-w-4xl",
         )}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-zinc-200 px-5 py-4">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4">
           <div>
             <h3 className="text-lg font-bold text-zinc-900">{title}</h3>
             {description ? <p className="mt-0.5 text-sm text-zinc-500">{description}</p> : null}

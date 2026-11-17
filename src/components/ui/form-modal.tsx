@@ -83,7 +83,7 @@ export function FormModal({
               {error}
             </p>
           ) : null}
-          <div className="mt-5 flex justify-end gap-2">
+          <div className="sticky bottom-0 -mx-5 -mb-4 mt-5 flex justify-end gap-2 border-t border-slate-100 bg-white px-5 py-3">
             <Button variant="secondary" onClick={close}>{tr("Cancel")}</Button>
             <Button type="submit" disabled={saving}>
               {saving ? tr("Saving…") : tr(submitLabel)}

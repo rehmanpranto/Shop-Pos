@@ -13,18 +13,14 @@ export function Sidebar({
   businessName,
   branchName,
   open,
-  hidden,
   collapsed,
-  onActivity,
   onToggleCollapsed,
   onClose,
 }: {
   businessName: string;
   branchName: string | null;
   open: boolean;
-  hidden: boolean;
   collapsed: boolean;
-  onActivity: () => void;
   onToggleCollapsed: () => void;
   onClose: () => void;
 }) {
@@ -35,14 +31,11 @@ export function Sidebar({
 
   return (
     <>
-      {open ? <button type="button" aria-label={tr("Close menu")} onClick={onClose} className="fixed inset-0 z-30 bg-zinc-900/50 md:hidden" /> : null}
+      {open ? <button type="button" aria-label={tr("Close menu")} onClick={onClose} className="fixed inset-0 z-30 bg-slate-900/40 backdrop-blur-sm md:hidden" /> : null}
       <aside
-        onMouseEnter={onActivity}
-        onFocusCapture={onActivity}
         className={cn(
           "fixed inset-y-0 left-0 z-40 flex w-64 shrink-0 flex-col border-r border-white/10 bg-sidebar text-slate-300 shadow-[12px_0_40px_rgba(15,34,54,0.12)] backdrop-blur-xl transition-[width,transform] duration-300 ease-out md:sticky md:top-0 md:h-screen md:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full",
-          hidden && "md:-translate-x-[calc(100%-12px)]",
           collapsed && "md:w-16",
         )}
       >
@@ -71,10 +64,8 @@ export function Sidebar({
                     <Link
                       key={href}
                       href={href}
-                      onClick={() => {
-                        onActivity();
-                        onClose();
-                      }}
+                      onClick={onClose}
+                      title={collapsed ? t(key) : undefined}
                       aria-current={active ? "page" : undefined}
                       className={cn(
                         "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition",

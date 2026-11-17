@@ -1,11 +1,30 @@
 "use client";
 
-import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { ReactNode, useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { ToastProvider } from "@/components/ui/toast";
 import { AppProvider, type CurrentUser } from "./app-context";
 import { CommandPalette } from "./command-palette";
 import { Sidebar } from "./sidebar";
 import { Topbar, type BranchOption } from "./topbar";
+
+const COLLAPSED_KEY = "sidebar-collapsed";
+
+function readCollapsed() {
+  try {
+    return localStorage.getItem(COLLAPSED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function subscribeCollapsed(onChange: () => void) {
+  window.addEventListener(COLLAPSED_KEY, onChange);
+  window.addEventListener("storage", onChange);
+  return () => {
+    window.removeEventListener(COLLAPSED_KEY, onChange);
+    window.removeEventListener("storage", onChange);
+  };
+}
 
 export function AppShell({
   user,
@@ -22,25 +41,22 @@ export function AppShell({
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [sidebarHidden, setSidebarHidden] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closeMenu = useCallback(() => setMenuOpen(false), []);
   const closeSearch = useCallback(() => setSearchOpen(false), []);
   const activeBranch = branches.find((branch) => branch.id === activeBranchId);
 
-  const resetSidebarTimer = useCallback(() => {
-    setSidebarHidden(false);
-    if (hideTimer.current) clearTimeout(hideTimer.current);
-    if (window.matchMedia("(min-width: 768px)").matches) {
-      hideTimer.current = setTimeout(() => setSidebarHidden(true), 5000);
+  // The sidebar stays put. Collapsing it to icons is the user's choice and is remembered on this device.
+  const sidebarCollapsed = useSyncExternalStore(subscribeCollapsed, readCollapsed, () => false);
+  const toggleCollapsed = useCallback(() => {
+    try {
+      localStorage.setItem(COLLAPSED_KEY, readCollapsed() ? "0" : "1");
+    } catch {
+      // Storage blocked (private window): the toggle simply is not remembered.
     }
+    window.dispatchEvent(new Event(COLLAPSED_KEY));
   }, []);
 
   useEffect(() => {
-    if (window.matchMedia("(min-width: 768px)").matches) {
-      hideTimer.current = setTimeout(() => setSidebarHidden(true), 5000);
-    }
     const onKey = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
@@ -50,9 +66,8 @@ export function AppShell({
     document.addEventListener("keydown", onKey);
     return () => {
       document.removeEventListener("keydown", onKey);
-      if (hideTimer.current) clearTimeout(hideTimer.current);
     };
-  }, [resetSidebarTimer]);
+  }, []);
 
   return (
     <AppProvider user={user}>
@@ -63,17 +78,11 @@ export function AppShell({
               businessName={businessName}
               branchName={branches.length > 1 ? (activeBranch?.name ?? null) : null}
               open={menuOpen}
-              hidden={sidebarHidden}
               collapsed={sidebarCollapsed}
-              onActivity={resetSidebarTimer}
-              onToggleCollapsed={() => {
-                setSidebarCollapsed((value) => !value);
-                resetSidebarTimer();
-              }}
+              onToggleCollapsed={toggleCollapsed}
               onClose={closeMenu}
             />
           </div>
-          {sidebarHidden ? <div aria-label="Reveal sidebar" onMouseEnter={resetSidebarTimer} className="fixed inset-y-0 left-0 z-30 hidden w-3 md:block" /> : null}
           <div className="flex min-w-0 flex-1 flex-col">
             <Topbar branches={user.role === "ADMIN" ? branches : []} activeBranchId={activeBranchId} onOpenMenu={() => setMenuOpen(true)} onOpenSearch={() => setSearchOpen(true)} />
             <main className="mx-auto w-full max-w-[1500px] min-w-0 flex-1 p-3 print:max-w-none print:p-0 sm:p-4 md:p-6">{children}</main>

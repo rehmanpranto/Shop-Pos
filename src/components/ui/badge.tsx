@@ -4,7 +4,7 @@ import { humanize } from "@/lib/format";
 import { getTr } from "@/lib/i18n-server";
 
 const tones = {
-  neutral: "bg-zinc-100 text-zinc-700",
+  neutral: "bg-slate-100 text-slate-700",
   green: "bg-emerald-50 text-emerald-700",
   amber: "bg-amber-50 text-amber-800",
   red: "bg-red-50 text-red-700",

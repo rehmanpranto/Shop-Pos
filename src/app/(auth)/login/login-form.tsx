@@ -40,7 +40,7 @@ export function LoginForm({ businessName }: { businessName: string }) {
   }
 
   const inputClass =
-    "h-11 w-full rounded-xl border border-white/90 bg-white/70 px-3 text-sm text-zinc-900 shadow-sm placeholder:text-zinc-400 focus:border-brand focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand/20";
+    "h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-zinc-900 shadow-sm transition-colors placeholder:text-slate-400 hover:border-slate-300 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20";
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
