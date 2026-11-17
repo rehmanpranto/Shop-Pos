@@ -1,6 +1,7 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import { prisma } from "@/lib/prisma";
 import { DEFAULT_BUSINESS_NAME } from "@/lib/constants";
+import { LOGO_WORDMARK_PNG_BASE64 } from "./assets/logo";
 
 export type InvoiceData = {
   businessName: string;
@@ -30,6 +31,10 @@ const LINE_HEIGHT = 14;
 const INK = rgb(0.09, 0.09, 0.11);
 const MUTED = rgb(0.44, 0.44, 0.48);
 const RULE = rgb(0.89, 0.89, 0.91);
+// Brand colours from the Rahman Hardware logo.
+const BRAND_NAVY = rgb(0.106, 0.165, 0.267);
+const BRAND_RED = rgb(0.89, 0.106, 0.137);
+const LOGO_WIDTH = 170;
 
 // Product column takes the space left over by the six number columns.
 const NUMBER_COLUMNS = ["Qty", "Unit", "Price", "Discount", "Tax", "Total"] as const;
@@ -92,10 +97,15 @@ export async function renderInvoicePdf(data: InvoiceData): Promise<Uint8Array> {
     if (insideTable) tableHeader();
   };
 
-  // Shop details
-  y -= 16;
-  left(data.businessName, MARGIN, bold, 16);
+  // Letterhead: the logo already spells out the shop name, with "INVOICE" on the right.
+  const logo = await pdf.embedPng(Buffer.from(LOGO_WORDMARK_PNG_BASE64, "base64"));
+  const logoHeight = (logo.height / logo.width) * LOGO_WIDTH;
+  page.drawImage(logo, { x: MARGIN, y: y - logoHeight, width: LOGO_WIDTH, height: logoHeight });
+  y -= 26;
+  right("INVOICE", PAGE_WIDTH - MARGIN, bold, 22, BRAND_NAVY);
   y -= 18;
+  right(data.invoiceNo, PAGE_WIDTH - MARGIN, regular, 11, MUTED);
+  y = PAGE_HEIGHT - MARGIN - logoHeight - 16;
   for (const detail of [data.address, data.phone]) {
     if (!detail) continue;
     for (const line of wrap(detail, CONTENT_WIDTH)) {
@@ -103,7 +113,8 @@ export async function renderInvoicePdf(data: InvoiceData): Promise<Uint8Array> {
       y -= LINE_HEIGHT;
     }
   }
-  y -= 8;
+  rule(BRAND_RED);
+  y -= LINE_HEIGHT + 8;
 
   // Invoice details
   left(`Invoice: ${data.invoiceNo}`, MARGIN, bold);

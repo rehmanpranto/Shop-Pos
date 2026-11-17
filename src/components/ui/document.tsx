@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { LogoWordmark } from "@/components/brand/logo-mark";
 
 /** A printable A4-style business document: letterhead, title block, body, footer. */
 export function PrintDocument({
@@ -24,9 +25,9 @@ export function PrintDocument({
     <div className="mx-auto max-w-4xl">
       {actions ? <div className="mb-4 flex flex-wrap items-center justify-end gap-2 print:hidden">{actions}</div> : null}
       <article className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm print:rounded-none print:border-0 print:p-0 print:shadow-none sm:p-8">
-        <header className="flex flex-wrap items-start justify-between gap-4 border-b border-zinc-200 pb-5">
+        <header className="flex flex-wrap items-start justify-between gap-4 border-b-2 border-[#e31b23] pb-5">
           <div>
-            <p className="text-lg font-black text-zinc-900">{businessName}</p>
+            <LogoWordmark className="mb-2 w-48 sm:w-56" alt={businessName} />
             {businessLines.filter(Boolean).map((line) => (
               <p key={line} className="text-sm text-zinc-600">
                 {line}

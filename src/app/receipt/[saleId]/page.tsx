@@ -4,6 +4,7 @@ import { formatDateTime, formatQty, humanize, toNumber } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { getSessionContext } from "@/lib/session";
 import { PrintButton } from "@/components/ui/print-button";
+import { LogoWordmark } from "@/components/brand/logo-mark";
 import { getTr } from "@/lib/i18n-server";
 
 export const dynamic = "force-dynamic";
@@ -44,7 +45,7 @@ export default async function ReceiptPage({ params }: { params: Promise<{ saleId
 
       <article className="mx-auto w-[80mm] bg-white px-[4mm] py-[5mm] font-mono text-[11px] leading-snug text-black shadow print:shadow-none">
         <header className="text-center">
-          <p className="text-[14px] font-bold leading-tight">{setting?.businessName ?? DEFAULT_BUSINESS_NAME}</p>
+          <LogoWordmark className="mx-auto mb-1 w-[56mm]" alt={setting?.businessName ?? DEFAULT_BUSINESS_NAME} />
           {setting?.address ? <p>{setting.address}</p> : null}
           {setting?.phone ? <p>{tr("Phone:")}{" "}{setting.phone}</p> : null}
           {setting?.vatNumber ? <p>{tr("BIN:")}{" "}{setting.vatNumber}</p> : null}

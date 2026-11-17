@@ -4,7 +4,7 @@ import { FormEvent, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { BarChart3, Eye, EyeOff, PackageCheck, ScanLine } from "lucide-react";
-import { LogoMark } from "@/components/brand/logo-mark";
+import { LogoMark, LogoWordmark } from "@/components/brand/logo-mark";
 import { LanguageSwitch, useTr } from "@/components/layout/language";
 
 const highlights = [
@@ -77,10 +77,7 @@ export function LoginForm({ businessName }: { businessName: string }) {
           <LanguageSwitch />
         </div>
         <div className="relative w-full max-w-sm rounded-[2rem] border border-white/90 bg-white/78 p-7 shadow-[0_18px_50px_rgba(39,70,100,0.08)] backdrop-blur-md sm:p-9">
-          <div className="mb-8 flex items-center gap-3 lg:hidden">
-            <LogoMark className="h-10 w-10" />
-            <span className="text-lg font-bold text-zinc-900">{businessName}</span>
-          </div>
+          <LogoWordmark className="mb-8 w-56 lg:hidden" alt={businessName} />
 
           <h2 className="text-3xl font-black tracking-tight text-zinc-900">{tr("Sign in")}</h2>
           <p className="mt-1 text-sm text-zinc-600">{tr("Use the email and password your admin gave you.")}</p>
