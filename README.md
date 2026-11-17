@@ -266,6 +266,10 @@ Good to know:
   `https://shop-pos-five.vercel.app`.
 - Use a direct database URL for Prisma migrations and the pooled URL for
   application traffic.
+- Every production deploy applies pending database migrations before building
+  (`scripts/migrate-on-deploy.mjs`). It uses `DATABASE_URL_UNPOOLED`, or the
+  pooled URL with `-pooler` removed from the host. If a migration fails, the
+  build stops and the previous deployment stays live.
 - The app also runs on any host that supports Next.js (`npm run build`, `npm start`).
 
 ### Production operations checklist
