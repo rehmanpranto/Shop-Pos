@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { subDays } from "date-fns";
-import { AlertTriangle, ArrowRight, Banknote, Check, HandCoins, Package, Receipt, TrendingUp, Wallet } from "lucide-react";
+import { AlertTriangle, ArrowRight, Banknote, HandCoins, Receipt, Wallet } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getSessionContext } from "@/lib/session";
 import { formatDateTime, formatMoney, formatQty, humanize, toNumber } from "@/lib/format";
@@ -40,22 +40,19 @@ export default async function DashboardPage() {
   }).format(now);
   const dhakaHour = Number(new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Dhaka", hour: "numeric", hour12: false }).format(now));
   const today = dhakaStartOfDay(now);
-  const yesterday = subDays(today, 1);
   const trendStart = subDays(today, TREND_DAYS - 1);
   const monthStart = new Date(`${dhakaDateKey(now).slice(0, 7)}-01T00:00:00${DHAKA_OFFSET}`);
   const completed = { branchId, status: "COMPLETED" as const };
 
-  const [todaySales, yesterdaySales, monthSales, trendSales, todayExpenses, todayRefunds, products, receivables, recentSales, payments, topItems, totalOrders, deliveryCounts, newCustomers] =
+  const [todaySales, monthSales, trendSales, todayExpenses, products, receivables, recentSales, payments, topItems] =
     await Promise.all([
       prisma.sale.aggregate({ where: { ...completed, saleDate: { gte: today } }, _sum: { totalAmount: true, grossProfit: true }, _count: { id: true } }),
-      prisma.sale.aggregate({ where: { ...completed, saleDate: { gte: yesterday, lt: today } }, _sum: { totalAmount: true } }),
       prisma.sale.aggregate({ where: { ...completed, saleDate: { gte: monthStart } }, _sum: { totalAmount: true, grossProfit: true }, _count: { id: true } }),
       prisma.sale.findMany({ where: { ...completed, saleDate: { gte: trendStart } }, select: { saleDate: true, totalAmount: true, grossProfit: true } }),
       prisma.expense.aggregate({ where: { branchId, date: { gte: today } }, _sum: { amount: true } }),
-      prisma.refund.aggregate({ where: { branchId, refundDate: { gte: today }, status: "COMPLETED" }, _sum: { refundAmount: true } }),
       prisma.product.findMany({
         where: { branchId, isActive: true },
-        select: { id: true, name: true, sku: true, stockQty: true, minStock: true, weightedAverageCost: true, baseUnit: { select: { code: true } } },
+        select: { id: true, name: true, sku: true, stockQty: true, minStock: true, baseUnit: { select: { code: true } } },
       }),
       prisma.customer.aggregate({ where: { branchId, outstanding: { gt: 0 } }, _sum: { outstanding: true }, _count: { id: true } }),
       prisma.sale.findMany({ where: { branchId }, include: { customer: { select: { name: true } } }, orderBy: { saleDate: "desc" }, take: 6 }),
@@ -67,9 +64,6 @@ export default async function DashboardPage() {
         orderBy: { _sum: { qty: "desc" } },
         take: 6,
       }),
-      prisma.sale.count({ where: { branchId, status: { not: "VOIDED" } } }),
-      prisma.delivery.groupBy({ by: ["status"], where: { branchId }, _count: { id: true } }),
-      prisma.customer.count({ where: { branchId, createdAt: { gte: subDays(today, 30) } } }),
     ]);
 
   const buckets = new Map<string, { label: string; sales: number; profit: number }>();
@@ -86,15 +80,9 @@ export default async function DashboardPage() {
   }
   const trend = [...buckets.values()];
 
-  const todayTotal = toNumber(todaySales._sum.totalAmount);
-  const yesterdayTotal = toNumber(yesterdaySales._sum.totalAmount);
-  const change = yesterdayTotal > 0 ? ((todayTotal - yesterdayTotal) / yesterdayTotal) * 100 : null;
-  const todayProfit = toNumber(todaySales._sum.grossProfit);
-
   const outOfStock = products.filter((p) => toNumber(p.stockQty) <= 0);
   const lowStock = products.filter((p) => toNumber(p.stockQty) > 0 && toNumber(p.stockQty) <= toNumber(p.minStock));
   const attention = [...outOfStock, ...lowStock].slice(0, 6);
-  const stockValue = products.reduce((sum, p) => sum + toNumber(p.stockQty) * toNumber(p.weightedAverageCost), 0);
 
   const productNames = new Map(products.map((p) => [p.id, p.name]));
   const topProducts = topItems.map((item) => ({
@@ -102,7 +90,6 @@ export default async function DashboardPage() {
     qty: toNumber(item._sum.qty),
   }));
   const paymentData = payments.map((p) => ({ name: tr(humanize(p.method)), value: toNumber(p._sum.amount) })).filter((p) => p.value > 0);
-  const deliveryTotals = new Map(deliveryCounts.map((item) => [item.status, item._count.id]));
 
   const hour = dhakaHour;
   const greeting = hour < 12 ? tr("Good morning") : hour < 17 ? tr("Good afternoon") : tr("Good evening");
@@ -122,49 +109,38 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
-      <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      {/* Mobile: Sales today full width, then 2×2. sm+: 3 equal cards, then 2 equal cards (6-col grid). */}
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-6">
         <StatCard
           label={tr("Sales today")}
-          value={formatMoney(todayTotal)}
-          hint={change === null ? tr("{0} sales", todaySales._count.id) : tr("{0}{1}% vs yesterday · {2} sales", change >= 0 ? "+" : "", change.toFixed(0), todaySales._count.id)}
+          value={formatMoney(todaySales._sum.totalAmount)}
+          hint={tr("{0} sales · {1} profit", todaySales._count.id, formatMoney(todaySales._sum.grossProfit))}
           icon={Banknote}
-        />
-        <StatCard label={tr("Total orders")} value={`${totalOrders}`} hint={tr("All non-voided orders")} icon={Receipt} tone="neutral" />
-        <StatCard label={tr("Pending orders")} value={`${deliveryTotals.get("PENDING") ?? 0}`} hint={tr("Awaiting fulfilment")} icon={Package} tone="amber" />
-        <StatCard label={tr("Processing orders")} value={`${(deliveryTotals.get("PREPARING") ?? 0)}`} hint={tr("Being prepared")} icon={Package} tone="neutral" />
-        <StatCard label={tr("Shipped orders")} value={`${deliveryTotals.get("OUT_FOR_DELIVERY") ?? 0}`} hint={tr("Out for delivery")} icon={TrendingUp} tone="green" />
-        <StatCard label={tr("Delivered orders")} value={`${deliveryTotals.get("DELIVERED") ?? 0}`} hint={tr("Successfully delivered")} icon={Check} tone="green" />
-        <StatCard label={tr("Cancelled orders")} value={`${deliveryTotals.get("CANCELLED") ?? 0}`} hint={tr("Cancelled shipments")} icon={Receipt} tone="red" />
-        <StatCard label={tr("New customers")} value={`${newCustomers}`} hint={tr("Joined in the last 30 days")} icon={HandCoins} tone="neutral" />
-        <StatCard
-          label={tr("Gross profit today")}
-          value={formatMoney(todayProfit)}
-          hint={todayTotal > 0 ? tr("{0}% margin", ((todayProfit / todayTotal) * 100).toFixed(0)) : tr("No sales yet")}
-          icon={TrendingUp}
-          tone="green"
+          className="col-span-2"
         />
         <StatCard
           label={tr("This month")}
           value={formatMoney(monthSales._sum.totalAmount)}
           hint={tr("{0} sales · {1} profit", monthSales._count.id, formatMoney(monthSales._sum.grossProfit))}
           icon={Receipt}
+          className="sm:col-span-2"
         />
+        <StatCard label={tr("Expenses today")} value={formatMoney(todayExpenses._sum.amount)} icon={Wallet} tone="neutral" className="sm:col-span-2" />
         <StatCard
           label={tr("Customers owe you")}
           value={formatMoney(receivables._sum.outstanding)}
           hint={tr("{0} customer{1} with dues", receivables._count.id, receivables._count.id === 1 ? "" : "s")}
           icon={HandCoins}
           tone="amber"
+          className="sm:col-span-3"
         />
-        <StatCard label={tr("Expenses today")} value={formatMoney(todayExpenses._sum.amount)} icon={Wallet} tone="neutral" />
-        <StatCard label={tr("Refunds today")} value={formatMoney(todayRefunds._sum.refundAmount)} icon={Receipt} tone="neutral" />
-        <StatCard label={tr("Stock value")} value={formatMoney(stockValue)} hint={tr("{0} products at cost", products.length)} icon={Package} tone="neutral" />
         <StatCard
           label={tr("Needs restocking")}
           value={`${outOfStock.length + lowStock.length}`}
           hint={tr("{0} out of stock · {1} low", outOfStock.length, lowStock.length)}
           icon={AlertTriangle}
           tone={outOfStock.length + lowStock.length > 0 ? "red" : "green"}
+          className="sm:col-span-3"
         />
       </section>
 
