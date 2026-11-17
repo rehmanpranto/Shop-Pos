@@ -8,7 +8,6 @@ import { Card, CardTitle } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/stat-card";
 import { Badge, StatusBadge } from "@/components/ui/badge";
 import { buttonClass } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { PaymentDonut, PaymentLegend, SalesTrendChart, TopProductsChart } from "./charts";
 import { LocalClock } from "./local-clock";
 import { getTr } from "@/lib/i18n-server";
@@ -46,7 +45,7 @@ export default async function DashboardPage() {
   const monthStart = new Date(`${dhakaDateKey(now).slice(0, 7)}-01T00:00:00${DHAKA_OFFSET}`);
   const completed = { branchId, status: "COMPLETED" as const };
 
-  const [todaySales, yesterdaySales, monthSales, trendSales, todayExpenses, todayRefunds, products, receivables, recentSales, payments, topItems, customerCount, totalOrders, deliveryCounts, newCustomers] =
+  const [todaySales, yesterdaySales, monthSales, trendSales, todayExpenses, todayRefunds, products, receivables, recentSales, payments, topItems, totalOrders, deliveryCounts, newCustomers] =
     await Promise.all([
       prisma.sale.aggregate({ where: { ...completed, saleDate: { gte: today } }, _sum: { totalAmount: true, grossProfit: true }, _count: { id: true } }),
       prisma.sale.aggregate({ where: { ...completed, saleDate: { gte: yesterday, lt: today } }, _sum: { totalAmount: true } }),
@@ -68,7 +67,6 @@ export default async function DashboardPage() {
         orderBy: { _sum: { qty: "desc" } },
         take: 6,
       }),
-      prisma.customer.count({ where: { branchId } }),
       prisma.sale.count({ where: { branchId, status: { not: "VOIDED" } } }),
       prisma.delivery.groupBy({ by: ["status"], where: { branchId }, _count: { id: true } }),
       prisma.customer.count({ where: { branchId, createdAt: { gte: subDays(today, 30) } } }),
@@ -106,12 +104,6 @@ export default async function DashboardPage() {
   const paymentData = payments.map((p) => ({ name: tr(humanize(p.method)), value: toNumber(p._sum.amount) })).filter((p) => p.value > 0);
   const deliveryTotals = new Map(deliveryCounts.map((item) => [item.status, item._count.id]));
 
-  const steps = [
-    { done: products.length > 0, title: tr("Add your products"), text: tr("Names, prices and opening stock."), href: "/products" },
-    { done: customerCount > 0, title: tr("Add a customer"), text: tr("Needed for credit sales and dues."), href: "/customers" },
-    { done: recentSales.length > 0, title: tr("Make your first sale"), text: tr("Open the POS and ring it up."), href: "/pos" },
-  ];
-  const showSetup = steps.some((step) => !step.done);
   const hour = dhakaHour;
   const greeting = hour < 12 ? tr("Good morning") : hour < 17 ? tr("Good afternoon") : tr("Good evening");
 
@@ -129,31 +121,6 @@ export default async function DashboardPage() {
         <Link href="/reports" className={buttonClass("secondary")}>{tr("Full reports")}<ArrowRight className="h-4 w-4" />
         </Link>
       </div>
-
-      {showSetup ? (
-        <Card className="border-brand/20 bg-brand-soft/60">
-          <p className="text-base font-bold text-zinc-900">{tr("Get your shop ready")}</p>
-          <p className="mt-0.5 text-sm text-zinc-600">{tr("Three steps and you can start selling.")}</p>
-          <div className="mt-4 grid gap-3 md:grid-cols-3">
-            {steps.map((step, i) => (
-              <Link key={step.title} href={step.href} className="flex items-start gap-3 rounded-xl border border-zinc-200 bg-white p-3 transition hover:border-brand">
-                <span
-                  className={cn(
-                    "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold",
-                    step.done ? "bg-emerald-600 text-white" : "bg-zinc-100 text-zinc-600",
-                  )}
-                >
-                  {step.done ? <Check className="h-4 w-4" /> : i + 1}
-                </span>
-                <span>
-                  <span className={cn("block text-sm font-semibold", step.done ? "text-zinc-400 line-through" : "text-zinc-900")}>{step.title}</span>
-                  <span className="block text-xs text-zinc-500">{step.text}</span>
-                </span>
-              </Link>
-            ))}
-          </div>
-        </Card>
-      ) : null}
 
       <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <StatCard
