@@ -60,6 +60,15 @@ export function Topbar({
     });
   }
 
+  // Seamless with the page at the top; a soft frosted glass appears only once content scrolls under it.
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 4);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   const initials = user.name
     .split(" ")
     .map((part) => part[0])
@@ -69,7 +78,13 @@ export function Topbar({
   const itemClass = "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-100";
 
   return (
-    <header className="sticky top-0 z-20 border-b border-white/80 bg-white/78 px-3 py-2.5 shadow-[0_6px_20px_rgba(39,70,100,0.04)] backdrop-blur-md print:hidden md:px-6">
+    <header
+      className={`sticky top-0 z-20 border-b px-3 py-2.5 transition-[background-color,border-color,box-shadow,backdrop-filter] duration-300 print:hidden md:px-6 ${
+        scrolled
+          ? "border-white/40 bg-[#eef3f8]/55 shadow-[0_8px_24px_rgba(39,70,100,0.06)] backdrop-blur-xl"
+          : "border-transparent bg-transparent"
+      }`}
+    >
       <div className="flex items-center gap-2 sm:gap-3">
         <button type="button" onClick={onOpenMenu} aria-label={tr("Open menu")} className="rounded-lg p-2 text-zinc-600 hover:bg-zinc-100 md:hidden">
           <Menu className="h-5 w-5" />
