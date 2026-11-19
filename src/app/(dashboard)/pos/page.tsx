@@ -54,7 +54,7 @@ type CompletedSale = { id: string; invoiceNo: string; total: number; paid: numbe
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
 async function fetchProducts(): Promise<Product[]> {
-  const res = await fetch("/api/products?pageSize=2000").then((r) => r.json());
+  const res = await fetch("/api/products?view=pos&pageSize=2000").then((r) => r.json());
   return ((res.data?.items ?? []) as RawProduct[])
     .filter((item) => item.isActive)
     .map((item) => ({

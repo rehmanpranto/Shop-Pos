@@ -15,20 +15,22 @@ export async function GET() {
   const auth = await requireApiAuth("sales:read");
   if (!auth.ok) return fail(auth.message, auth.status);
 
-  await Promise.all(
-    DEFAULT_ACCOUNTS.map(([name, method]) =>
-      prisma.paymentAccount.upsert({
-        where: { branchId_name: { branchId: auth.user.branchId!, name } },
-        create: { branchId: auth.user.branchId!, name, method },
-        update: {},
-      }),
-    ),
-  );
+  const branchId = auth.user.branchId!;
+  const all = await prisma.paymentAccount.findMany({ where: { branchId }, orderBy: { name: "asc" } });
 
-  const items = await prisma.paymentAccount.findMany({
-    where: { branchId: auth.user.branchId!, isActive: true },
-    orderBy: { name: "asc" },
-  });
+  // Create the default accounts only when some are missing (normally just once per branch),
+  // instead of six upserts on every POS load.
+  const existing = new Set(all.map((a) => a.name));
+  const missing = DEFAULT_ACCOUNTS.filter(([name]) => !existing.has(name));
+  if (missing.length > 0) {
+    await prisma.paymentAccount.createMany({
+      data: missing.map(([name, method]) => ({ branchId, name, method })),
+      skipDuplicates: true,
+    });
+    const items = await prisma.paymentAccount.findMany({ where: { branchId, isActive: true }, orderBy: { name: "asc" } });
+    return ok(items);
+  }
 
+  const items = all.filter((a) => a.isActive);
   return ok(items);
 }

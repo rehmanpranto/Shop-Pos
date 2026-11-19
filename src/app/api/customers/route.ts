@@ -22,6 +22,7 @@ export async function GET() {
 
   const items = await prisma.customer.findMany({
     where: { branchId: auth.user.branchId! },
+    select: { id: true, name: true, customerCode: true, priceLevel: true },
     orderBy: { createdAt: "desc" },
   });
 

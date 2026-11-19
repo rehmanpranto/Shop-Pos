@@ -49,6 +49,30 @@ export async function GET(request: Request) {
       : undefined,
   };
 
+  // The POS loads the whole active catalogue at once: fetch only the columns it uses and skip the count.
+  if (searchParams.get("view") === "pos") {
+    const items = await prisma.product.findMany({
+      where: { ...where, isActive: true },
+      select: {
+        id: true,
+        name: true,
+        sku: true,
+        barcode: true,
+        isActive: true,
+        stockQty: true,
+        retailPrice: true,
+        wholesalePrice: true,
+        minSellingPrice: true,
+        category: { select: { id: true, name: true } },
+        baseUnit: { select: { id: true, code: true } },
+        unitConversions: { select: { fromUnitId: true, factor: true, fromUnit: { select: { code: true } } } },
+      },
+      orderBy: { name: "asc" },
+      take: pageSize,
+    });
+    return ok({ items, total: items.length, page: 1, pageSize });
+  }
+
   const [items, total] = await Promise.all([
     prisma.product.findMany({
       where,
