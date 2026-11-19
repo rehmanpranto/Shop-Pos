@@ -4,7 +4,7 @@ import { ResponsiveTable } from "./responsive-table";
 
 export function Card({ className, children }: { className?: string; children: ReactNode }) {
   return (
-    <section className={cn("rounded-3xl border border-white/90 bg-white/88 p-5 shadow-[0_8px_24px_rgba(39,70,100,0.05)] backdrop-blur-md", className)}>
+    <section className={cn("glass-panel rounded-3xl p-5", className)}>
       {children}
     </section>
   );
@@ -21,7 +21,7 @@ export function CardValue({ children }: { children: ReactNode }) {
 /** Card that holds a full-width table: no padding, scrolls sideways on small screens. */
 export function TableCard({ className, children }: { className?: string; children: ReactNode }) {
   return (
-    <section className={cn("overflow-hidden rounded-3xl border border-white/90 bg-white/88 shadow-[0_8px_24px_rgba(39,70,100,0.05)] backdrop-blur-md", className)}>
+    <section className={cn("glass-panel overflow-hidden rounded-3xl", className)}>
       <ResponsiveTable>{children}</ResponsiveTable>
     </section>
   );

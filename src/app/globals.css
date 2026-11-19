@@ -27,10 +27,15 @@
 }
 
 body {
+  /* Soft colour washes behind the page so the frosted glass tiles have something to show through. */
   background:
-    radial-gradient(circle at 8% 0%, rgba(147, 197, 253, 0.3), transparent 28rem),
-    radial-gradient(circle at 92% 8%, rgba(253, 230, 138, 0.18), transparent 24rem),
+    radial-gradient(circle at 6% 2%, rgba(96, 165, 250, 0.42), transparent 26rem),
+    radial-gradient(circle at 94% 6%, rgba(252, 211, 77, 0.38), transparent 24rem),
+    radial-gradient(circle at 50% 45%, rgba(167, 139, 250, 0.24), transparent 30rem),
+    radial-gradient(circle at 10% 90%, rgba(110, 231, 183, 0.3), transparent 28rem),
+    radial-gradient(circle at 90% 85%, rgba(253, 164, 175, 0.3), transparent 26rem),
     var(--background);
+  background-attachment: fixed;
   color: var(--foreground);
   font-family: var(--font-montserrat), var(--font-bangla), "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   text-rendering: optimizeLegibility;
@@ -203,8 +208,74 @@ html {
   }
 }
 
+/* iPhone-style frosted glass for tiles (.glass-tile) and larger panels (.glass-panel). */
+.glass-tile {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.28));
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  backdrop-filter: blur(22px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.25),
+    0 12px 32px rgba(30, 60, 100, 0.12),
+    0 2px 6px rgba(30, 60, 100, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+/* Light sheen across the top, like light catching curved glass. */
+.glass-tile::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 55% 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0));
+  border-radius: inherit;
+  pointer-events: none;
+}
+.glass-tile > * {
+  position: relative;
+}
+@media (hover: hover) {
+  .glass-tile:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.25),
+      0 18px 40px rgba(30, 60, 100, 0.16),
+      0 3px 8px rgba(30, 60, 100, 0.08);
+  }
+}
+/* Panels hold tables, lists and charts, so they stay a little more solid to keep text easy to read. */
+.glass-panel {
+  position: relative;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.58));
+  -webkit-backdrop-filter: blur(24px) saturate(170%);
+  backdrop-filter: blur(24px) saturate(170%);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 12px 32px rgba(30, 60, 100, 0.1),
+    0 2px 6px rgba(30, 60, 100, 0.05);
+}
+.glass-chip {
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .glass-tile { transition: none; }
+  .glass-tile:hover { transform: none; }
+}
+
 @media print {
   body {
     background: #fff;
+  }
+  .glass-tile,
+  .glass-panel {
+    background: #fff;
+    box-shadow: none;
+    border-color: #e4e4e7;
   }
 }
